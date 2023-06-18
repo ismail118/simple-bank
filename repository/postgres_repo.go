@@ -3,18 +3,24 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"github.com/ismail118/simple-bank/models"
 	"log"
-	"simple-bank/models"
 	"time"
 )
 
 type PostgresRepository struct {
-	db *sql.DB
+	db DBTX
 }
 
-func NewPostgresRepo(db *sql.DB) *PostgresRepository {
+func NewPostgresRepo(db DBTX) Repository {
 	return &PostgresRepository{
 		db: db,
+	}
+}
+
+func (r *PostgresRepository) WithTx(tx *sql.Tx) Repository {
+	return &PostgresRepository{
+		db: tx,
 	}
 }
 
@@ -49,7 +55,7 @@ func (r *PostgresRepository) InsertAccount(ctx context.Context, arg models.Accou
 }
 
 // GetAccountByID return account from given id or empty account if not found and error if exist
-func (r *PostgresRepository) GetAccountByID(ctx context.Context, id int64) (*models.Account, error) {
+func (r *PostgresRepository) GetAccountByID(ctx context.Context, id int64) (models.Account, error) {
 	query := `
 	select id, owner, balance, currency, created_at from accounts
 	where id = $1
@@ -67,17 +73,17 @@ func (r *PostgresRepository) GetAccountByID(ctx context.Context, id int64) (*mod
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("account with id: %d not found in database", id)
-			return &a, nil
+			return a, nil
 		}
-		return nil, err
+		return a, err
 	}
 
 	err = row.Err()
 	if err != nil {
-		return nil, err
+		return a, err
 	}
 
-	return &a, nil
+	return a, nil
 }
 
 // GetListAccounts return list accounts from database and error if exist
@@ -174,7 +180,7 @@ func (r *PostgresRepository) InsertEntry(ctx context.Context, arg models.Entry) 
 }
 
 // GetEntryByID return entry by given id or empty entry if not found and error if exist
-func (r *PostgresRepository) GetEntryByID(ctx context.Context, id int64) (*models.Entry, error) {
+func (r *PostgresRepository) GetEntryByID(ctx context.Context, id int64) (models.Entry, error) {
 	query := `
 	select id, account_id, amount, created_at from entries
 	where id = $1
@@ -192,17 +198,17 @@ func (r *PostgresRepository) GetEntryByID(ctx context.Context, id int64) (*model
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("entries with id:%d not found", id)
-			return &a, nil
+			return a, nil
 		}
-		return nil, err
+		return a, err
 	}
 
 	err = row.Err()
 	if err != nil {
-		return &a, err
+		return a, err
 	}
 
-	return &a, nil
+	return a, nil
 }
 
 // GetListEntries return list entry from given account_id and error if exist
@@ -273,7 +279,7 @@ func (r *PostgresRepository) InsertTransfer(ctx context.Context, arg models.Tran
 }
 
 // GetTransferByID return transfers from given id or empty transfers if not found and error if exist
-func (r *PostgresRepository) GetTransferByID(ctx context.Context, id int64) (*models.Transfer, error) {
+func (r *PostgresRepository) GetTransferByID(ctx context.Context, id int64) (models.Transfer, error) {
 	query := `
 	select id, from_account_id, to_account_id, amount, created_at from transfers
 	where id = $1
@@ -291,17 +297,17 @@ func (r *PostgresRepository) GetTransferByID(ctx context.Context, id int64) (*mo
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("transfers with id:%d not found", id)
-			return &a, nil
+			return a, nil
 		}
-		return nil, err
+		return a, err
 	}
 
 	err = row.Err()
 	if err != nil {
-		return &a, err
+		return a, err
 	}
 
-	return &a, nil
+	return a, nil
 }
 
 // GetListTransfers return list transfers from given from_account_id or to_account_id and error if exist
@@ -342,4 +348,62 @@ func (r *PostgresRepository) GetListTransfers(ctx context.Context, fromAccountID
 	}
 
 	return items, nil
+}
+
+// GetAccountByIdForUpdate return account from given id or empty account if not found and error if exist
+func (r *PostgresRepository) GetAccountByIdForUpdate(ctx context.Context, id int64) (models.Account, error) {
+	query := `
+	select id, owner, balance, currency, created_at from accounts
+	where id = $1 
+	for no key update;
+`
+	var a models.Account
+
+	row := r.db.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&a.ID,
+		&a.Owner,
+		&a.Balance,
+		&a.Currency,
+		&a.CreatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("account with id: %d not found in database", id)
+			return a, nil
+		}
+		return a, err
+	}
+
+	err = row.Err()
+	if err != nil {
+		return a, err
+	}
+
+	return a, nil
+}
+
+// AddAccountBalanceByID increase or decrease account balance from given id and return accounts and error if exist.
+// if amount argument is positive number it will increase the balance and otherwise if negative number it will decrease the balance
+func (r *PostgresRepository) AddAccountBalanceByID(ctx context.Context, amount, id int64) (models.Account, error) {
+	query := `
+	update accounts set balance = balance + $1
+	where id = $2
+	returning id, owner, balance, currency, created_at
+`
+	var a models.Account
+
+	row := r.db.QueryRowContext(ctx, query, amount, id)
+	err := row.Scan(
+		&a.ID,
+		&a.Owner,
+		&a.Balance,
+		&a.Currency,
+		&a.CreatedAt,
+	)
+	if err != nil {
+		return a, err
+	}
+
+	return a, nil
 }

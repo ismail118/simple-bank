@@ -1,3 +1,7 @@
+install_golang_migration:
+	echo "install golang migration"
+	brew install golang-migrate
+
 create_migration:
 	echo "create migration file"
 	migrate create -ext sql -dir db/migration -seq init_schema
@@ -20,5 +24,7 @@ migrate_down:
 	# -database "driver://user:password@host:port/db_name?sslmode=disable"
 	migrate -path db/migration -database "postgresql://postgres:postgres@localhost:5432/simple_bank?sslmode=disable" -verbose down
 
+test:
+	go test -v -cover ./...
 
 
