@@ -118,7 +118,7 @@ func TestUpdateAccountBalanceByID(t *testing.T) {
 	dataTest.ID = newID
 	dataTest.Balance = util.RandomBalance()
 
-	err = testRepo.UpdateAccountBalanceByID(context.Background(), dataTest.Balance, newID)
+	err = testRepo.UpdateAccount(context.Background(), dataTest)
 	if err != nil {
 		t.Errorf("failed update account balance error:%s", err)
 	}
@@ -290,7 +290,7 @@ func TestGetListEntries(t *testing.T) {
 		// update account
 		acc.Balance = util.RandomBalance()
 
-		err = testRepo.UpdateAccountBalanceByID(context.Background(), acc.Balance, acc.ID)
+		err = testRepo.UpdateAccount(context.Background(), acc)
 		if err != nil {
 			t.Errorf("failed update account balance error:%s", err)
 		}

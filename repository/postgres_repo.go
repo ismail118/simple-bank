@@ -94,7 +94,7 @@ func (r *PostgresRepository) GetListAccounts(ctx context.Context, limit, offset 
 	limit $1
 	offset $2
 `
-	var items []*models.Account
+	items := []*models.Account{}
 
 	rows, err := r.db.QueryContext(ctx, query, limit, offset)
 	if err != nil {
@@ -125,13 +125,13 @@ func (r *PostgresRepository) GetListAccounts(ctx context.Context, limit, offset 
 	return items, nil
 }
 
-// UpdateAccountBalanceByID update account balance from given id and return error if exist
-func (r *PostgresRepository) UpdateAccountBalanceByID(ctx context.Context, balance, id int64) error {
+// UpdateAccount update account balance from given id and return error if exist
+func (r *PostgresRepository) UpdateAccount(ctx context.Context, arg models.Account) error {
 	query := `
-	update accounts set balance = $1
-	where id = $2
+	update accounts set owner = $1, balance = $2, currency = $3
+	where id = $4
 `
-	_, err := r.db.ExecContext(ctx, query, balance, id)
+	_, err := r.db.ExecContext(ctx, query, arg.Owner, arg.Balance, arg.Currency, arg.ID)
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func (r *PostgresRepository) GetListEntries(ctx context.Context, accountID int64
 	limit $2
 	offset $3
 `
-	var items []*models.Entry
+	items := []*models.Entry{}
 
 	rows, err := r.db.QueryContext(ctx, query, accountID, limit, offset)
 	if err != nil {
@@ -319,7 +319,7 @@ func (r *PostgresRepository) GetListTransfers(ctx context.Context, fromAccountID
 	limit $3
 	offset $4
 `
-	var items []*models.Transfer
+	items := []*models.Transfer{}
 
 	rows, err := r.db.QueryContext(ctx, query, fromAccountID, toAccountID, limit, offset)
 	if err != nil {

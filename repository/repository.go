@@ -10,7 +10,7 @@ type Repository interface {
 	InsertAccount(ctx context.Context, arg models.Account) (int64, error)
 	GetAccountByID(ctx context.Context, id int64) (models.Account, error)
 	GetListAccounts(ctx context.Context, limit, offset int) ([]*models.Account, error)
-	UpdateAccountBalanceByID(ctx context.Context, balance, id int64) error
+	UpdateAccount(ctx context.Context, arg models.Account) error
 	DeleteAccount(ctx context.Context, id int64) error
 	InsertEntry(ctx context.Context, arg models.Entry) (int64, error)
 	GetEntryByID(ctx context.Context, id int64) (models.Entry, error)
