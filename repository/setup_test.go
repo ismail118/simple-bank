@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"github.com/ismail118/simple-bank/util"
 	_ "github.com/lib/pq"
 	"log"
 	"os"
@@ -14,10 +15,14 @@ const (
 )
 
 var testRepo Repository
-var testStore *Store
+var testStore Store
 
 func TestMain(m *testing.M) {
-	conn, err := sql.Open(dbDriver, dbSource)
+	conf, err := util.LoadConfig("../.")
+	if err != nil {
+		log.Fatal(err)
+	}
+	conn, err := sql.Open(conf.DbDriver, conf.DbSource)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ismail118/simple-bank/models"
 	"net/http"
@@ -71,7 +72,7 @@ func (s *Server) listAccounts(ctx *gin.Context) {
 
 	err := ctx.BindQuery(&req)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
@@ -188,7 +189,7 @@ func (s *Server) listEntries(ctx *gin.Context) {
 
 	err := ctx.BindQuery(&req)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
@@ -259,9 +260,10 @@ func (s *Server) listTransfer(ctx *gin.Context) {
 }
 
 type transferRequest struct {
-	FromAccountID int64 `json:"from_account_id" binding:"required,min=1"`
-	ToAccountID   int64 `json:"to_account_id" binding:"required,min=1"`
-	Amount        int64 `json:"amount" binding:"required,min=1"`
+	FromAccountID int64  `json:"from_account_id" binding:"required,min=1"`
+	ToAccountID   int64  `json:"to_account_id" binding:"required,min=1"`
+	Amount        int64  `json:"amount" binding:"required,min=1"`
+	Currency      string `json:"currency" binding:"required,oneof=USD EUR CAD"`
 }
 
 func (s *Server) transfer(ctx *gin.Context) {
@@ -281,6 +283,10 @@ func (s *Server) transfer(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, "from account not found")
 		return
 	}
+	if fAccount.Currency != req.Currency {
+		ctx.JSON(http.StatusBadRequest, fmt.Sprintf("account %d mismatch: %s vs %s", fAccount.ID, fAccount.Currency, req.Currency))
+		return
+	}
 
 	tAccount, err := s.repo.GetAccountByID(ctx, req.ToAccountID)
 	if err != nil {
@@ -289,6 +295,10 @@ func (s *Server) transfer(ctx *gin.Context) {
 	}
 	if tAccount.ID < 1 {
 		ctx.JSON(http.StatusNotFound, "to account not found")
+		return
+	}
+	if fAccount.Currency != req.Currency {
+		ctx.JSON(http.StatusBadRequest, fmt.Sprintf("account %d mismatch: %s vs %s", tAccount.ID, tAccount.Currency, req.Currency))
 		return
 	}
 

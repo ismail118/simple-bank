@@ -7,19 +7,25 @@ import (
 	"github.com/ismail118/simple-bank/models"
 )
 
-type Store struct {
+type Store interface {
+	Repository
+	execTx(ctx context.Context, fn func(Repository) error) error
+	TransferTx(ctx context.Context, arg models.Transfer) (TransferTxResult, error)
+}
+
+type SQLStore struct {
 	Repository
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		db:         db,
 		Repository: NewPostgresRepo(db),
 	}
 }
 
-func (s *Store) execTx(ctx context.Context, fn func(Repository) error) error {
+func (s *SQLStore) execTx(ctx context.Context, fn func(Repository) error) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -45,7 +51,7 @@ type TransferTxResult struct {
 	ToEntry     models.Entry    `json:"to_entry"`
 }
 
-func (s *Store) TransferTx(ctx context.Context, arg models.Transfer) (TransferTxResult, error) {
+func (s *SQLStore) TransferTx(ctx context.Context, arg models.Transfer) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := s.execTx(ctx, func(r Repository) error {

@@ -27,4 +27,3 @@ migrate_down:
 test:
 	go test -v -cover ./...
 
-

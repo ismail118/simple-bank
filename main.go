@@ -4,18 +4,18 @@ import (
 	"database/sql"
 	"github.com/ismail118/simple-bank/api"
 	"github.com/ismail118/simple-bank/repository"
+	"github.com/ismail118/simple-bank/util"
 	_ "github.com/lib/pq"
 	"log"
 )
 
-const (
-	dbDriver   = "postgres"
-	dbSource   = "postgresql://postgres:postgres@localhost:5432/simple_bank?sslmode=disable"
-	serverAddr = "localhost:8080"
-)
-
 func main() {
-	conn, err := sql.Open(dbDriver, dbSource)
+	conf, err := util.LoadConfig(".")
+	if err != nil {
+		log.Fatal("cannot load config:", err)
+	}
+
+	conn, err := sql.Open(conf.DbDriver, conf.DbSource)
 	if err != nil {
 		log.Fatal("cannot connect db error:", err)
 	}
@@ -25,7 +25,7 @@ func main() {
 
 	srv := api.NewServer(store, repo)
 
-	err = srv.Start(serverAddr)
+	err = srv.Start(conf.ServerAddr)
 	if err != nil {
 		log.Fatal("cannot start server error:", err)
 	}
