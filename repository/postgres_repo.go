@@ -86,6 +86,37 @@ func (r *PostgresRepository) GetAccountByID(ctx context.Context, id int64) (mode
 	return a, nil
 }
 
+func (r *PostgresRepository) GetAccountByOwnerAndCurrency(ctx context.Context, owner, currency string) (models.Account, error) {
+	query := `
+	select id, owner, balance, currency, created_at from accounts
+	where owner = $1 and currency = $2
+`
+	var a models.Account
+
+	row := r.db.QueryRowContext(ctx, query, owner, currency)
+	err := row.Scan(
+		&a.ID,
+		&a.Owner,
+		&a.Balance,
+		&a.Currency,
+		&a.CreatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("account with owner %s and currency %s not found in database", owner, currency)
+			return a, nil
+		}
+		return a, err
+	}
+
+	err = row.Err()
+	if err != nil {
+		return a, err
+	}
+
+	return a, nil
+}
+
 // GetListAccounts return list accounts from database and error if exist
 func (r *PostgresRepository) GetListAccounts(ctx context.Context, limit, offset int) ([]*models.Account, error) {
 	query := `
@@ -406,4 +437,151 @@ func (r *PostgresRepository) AddAccountBalanceByID(ctx context.Context, amount, 
 	}
 
 	return a, nil
+}
+
+func (r *PostgresRepository) InsertUsers(ctx context.Context, arg models.Users) error {
+	query := `
+	insert into users (username, hashed_password, full_name, email, created_at, updated_at) 
+	values ($1, $2, $3, $4, $5, $6)
+`
+
+	_, err := r.db.ExecContext(ctx, query,
+		arg.Username,
+		arg.HashedPassword,
+		arg.FullName,
+		arg.Email,
+		time.Now(),
+		time.Now(),
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *PostgresRepository) GetUsersByUsername(ctx context.Context, username string) (models.Users, error) {
+	query := `
+	select username, hashed_password, full_name, email, created_at, updated_at from users
+	where username = $1
+`
+	var a models.Users
+	row := r.db.QueryRowContext(ctx, query, username)
+	err := row.Scan(
+		&a.Username,
+		&a.HashedPassword,
+		&a.FullName,
+		&a.Email,
+		&a.CreatedAt,
+		&a.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("users with username %s not found", username)
+			return a, nil
+		}
+		return a, err
+	}
+
+	err = row.Err()
+	if err != nil {
+		return a, err
+	}
+
+	return a, nil
+}
+
+func (r *PostgresRepository) GetUsersByEmail(ctx context.Context, email string) (models.Users, error) {
+	query := `
+	select username, hashed_password, full_name, email, created_at, updated_at from users
+	where email = $1
+`
+	var a models.Users
+	row := r.db.QueryRowContext(ctx, query, email)
+	err := row.Scan(
+		&a.Username,
+		&a.HashedPassword,
+		&a.FullName,
+		&a.Email,
+		&a.CreatedAt,
+		&a.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("users with email %s not found", email)
+			return a, nil
+		}
+		return a, err
+	}
+
+	err = row.Err()
+	if err != nil {
+		return a, err
+	}
+
+	return a, nil
+}
+
+func (r *PostgresRepository) GetListUsers(ctx context.Context, limit, offset int) ([]*models.Users, error) {
+	query := `
+	select username, hashed_password, full_name, email, created_at, updated_at from users limit $1 offset $2
+`
+	var items []*models.Users
+	rows, err := r.db.QueryContext(ctx, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var a models.Users
+		err := rows.Scan(
+			&a.Username,
+			&a.HashedPassword,
+			&a.FullName,
+			&a.Email,
+			&a.CreatedAt,
+			&a.UpdatedAt,
+		)
+		if err != nil {
+			return items, err
+		}
+		items = append(items, &a)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return items, err
+	}
+
+	return items, nil
+}
+
+func (r *PostgresRepository) UpdateUsers(ctx context.Context, arg models.Users) error {
+	query := `
+	update users set full_name = $1, email = $2, updated_at = $3
+	where username = $4
+`
+	_, err := r.db.ExecContext(ctx, query,
+		arg.FullName,
+		arg.Email,
+		time.Now(),
+		arg.Username,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *PostgresRepository) DeleteUsers(ctx context.Context, username string) error {
+	query := `
+	delete from users where username = $1
+`
+	_, err := r.db.ExecContext(ctx, query, username)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

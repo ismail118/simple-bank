@@ -3,13 +3,47 @@ package repository
 import (
 	"context"
 	"github.com/ismail118/simple-bank/models"
+	"github.com/ismail118/simple-bank/util"
 	"log"
 	"testing"
+	"time"
 )
 
 func TestTransferTx(t *testing.T) {
-	acc1 := createRandomAccount()
-	acc2 := createRandomAccount()
+	user1 := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: "secret",
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user1)
+	if err != nil {
+		t.Errorf("failed insert users 1 error:%s", err)
+	}
+
+	acc1 := createRandomAccount(user1.Username)
+
+	user2 := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: "secret",
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err = testRepo.InsertUsers(context.Background(), user2)
+	if err != nil {
+		t.Errorf("failed insert users 2 error:%s", err)
+	}
+
+	acc2 := createRandomAccount(user2.Username)
+
 	log.Println(">> before:", acc1.Balance, acc2.Balance)
 
 	newID, err := testStore.InsertAccount(context.Background(), acc1)
@@ -155,8 +189,40 @@ func TestTransferTx(t *testing.T) {
 }
 
 func TestTransferTxDeadlock(t *testing.T) {
-	acc1 := createRandomAccount()
-	acc2 := createRandomAccount()
+	user1 := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: "secret",
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user1)
+	if err != nil {
+		t.Errorf("failed insert users 1 error:%s", err)
+	}
+
+	acc1 := createRandomAccount(user1.Username)
+
+	user2 := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: "secret",
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err = testRepo.InsertUsers(context.Background(), user2)
+	if err != nil {
+		t.Errorf("failed insert users 2 error:%s", err)
+	}
+
+	acc2 := createRandomAccount(user2.Username)
+
 	log.Println(">> before:", acc1.Balance, acc2.Balance)
 
 	newID, err := testStore.InsertAccount(context.Background(), acc1)

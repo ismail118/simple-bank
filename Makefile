@@ -24,6 +24,16 @@ migrate_down:
 	# -database "driver://user:password@host:port/db_name?sslmode=disable"
 	migrate -path db/migration -database "postgresql://postgres:postgres@localhost:5432/simple_bank?sslmode=disable" -verbose down
 
+migrate_up1:
+	echo "up migration 1"
+	# -database "driver://user:password@host:port/db_name?sslmode=disable"
+	migrate -path db/migration -database "postgresql://postgres:postgres@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
+
+migrate_down1:
+	echo "down migration 1"
+	# -database "driver://user:password@host:port/db_name?sslmode=disable"
+	migrate -path db/migration -database "postgresql://postgres:postgres@localhost:5432/simple_bank?sslmode=disable" -verbose down 1
+
 test:
 	go test -v -cover ./...
 

@@ -5,18 +5,36 @@ import (
 	"github.com/ismail118/simple-bank/models"
 	"github.com/ismail118/simple-bank/util"
 	"testing"
+	"time"
 )
 
-func createRandomAccount() models.Account {
+func createRandomAccount(owner string) models.Account {
 	return models.Account{
-		Owner:    util.RandomOwner(),
+		Owner:    owner,
 		Balance:  util.RandomBalance(),
 		Currency: util.RandomCurrency(),
 	}
 }
 
 func TestInsertAccount(t *testing.T) {
-	dataTest := createRandomAccount()
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+
+	user := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	dataTest := createRandomAccount(user.Username)
 
 	// test insert
 	newID, err := testRepo.InsertAccount(context.Background(), dataTest)
@@ -45,7 +63,24 @@ func TestInsertAccount(t *testing.T) {
 }
 
 func TestGetAccountByID(t *testing.T) {
-	dataTest := createRandomAccount()
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+
+	user := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	dataTest := createRandomAccount(user.Username)
 
 	// test insert
 	newID, err := testRepo.InsertAccount(context.Background(), dataTest)
@@ -74,7 +109,24 @@ func TestGetAccountByID(t *testing.T) {
 }
 
 func TestGetAccountByIdForUpdate(t *testing.T) {
-	dataTest := createRandomAccount()
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+
+	user := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	dataTest := createRandomAccount(user.Username)
 
 	// test insert
 	newID, err := testRepo.InsertAccount(context.Background(), dataTest)
@@ -102,8 +154,25 @@ func TestGetAccountByIdForUpdate(t *testing.T) {
 	}
 }
 
-func TestUpdateAccountBalanceByID(t *testing.T) {
-	dataTest := createRandomAccount()
+func TestUpdateAccount(t *testing.T) {
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+
+	user := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	dataTest := createRandomAccount(user.Username)
 
 	// test insert
 	newID, err := testRepo.InsertAccount(context.Background(), dataTest)
@@ -141,7 +210,24 @@ func TestUpdateAccountBalanceByID(t *testing.T) {
 }
 
 func TestDeleteAccount(t *testing.T) {
-	dataTest := createRandomAccount()
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+
+	user := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	dataTest := createRandomAccount(user.Username)
 
 	// test insert
 	newID, err := testRepo.InsertAccount(context.Background(), dataTest)
@@ -171,7 +257,23 @@ func TestDeleteAccount(t *testing.T) {
 
 func TestGetListAccounts(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		dataTest := createRandomAccount()
+		hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+		user := models.Users{
+			Username:       util.RandomOwner(),
+			HashedPassword: hashedPassword,
+			FullName:       util.RandomOwner(),
+			Email:          util.RandomEmail(),
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+		}
+
+		// test insert
+		err := testRepo.InsertUsers(context.Background(), user)
+		if err != nil {
+			t.Errorf("failed insert users error:%s", err)
+		}
+
+		dataTest := createRandomAccount(user.Username)
 
 		// test insert
 		newID, err := testRepo.InsertAccount(context.Background(), dataTest)
@@ -194,7 +296,24 @@ func TestGetListAccounts(t *testing.T) {
 }
 
 func TestInsertEntry(t *testing.T) {
-	acc := createRandomAccount()
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	user := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	acc := createRandomAccount(user.Username)
+
 	// test insert account
 	newID, err := testRepo.InsertAccount(context.Background(), acc)
 	if err != nil {
@@ -234,7 +353,24 @@ func TestInsertEntry(t *testing.T) {
 }
 
 func TestGetEntryByID(t *testing.T) {
-	acc := createRandomAccount()
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	user := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	acc := createRandomAccount(user.Username)
+
 	// test insert account
 	newID, err := testRepo.InsertAccount(context.Background(), acc)
 	if err != nil {
@@ -274,7 +410,23 @@ func TestGetEntryByID(t *testing.T) {
 }
 
 func TestGetListEntries(t *testing.T) {
-	acc := createRandomAccount()
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	user := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	acc := createRandomAccount(user.Username)
 	// test insert account
 	newID, err := testRepo.InsertAccount(context.Background(), acc)
 	if err != nil {
@@ -318,8 +470,40 @@ func TestGetListEntries(t *testing.T) {
 }
 
 func TestInsertTransfer(t *testing.T) {
-	acc1 := createRandomAccount()
-	acc2 := createRandomAccount()
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	user1 := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user1)
+	if err != nil {
+		t.Errorf("failed insert users 1 error:%s", err)
+	}
+
+	acc1 := createRandomAccount(user1.Username)
+
+	user2 := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err = testRepo.InsertUsers(context.Background(), user2)
+	if err != nil {
+		t.Errorf("failed insert users 2 error:%s", err)
+	}
+
+	acc2 := createRandomAccount(user2.Username)
 
 	// insert 2 new account
 	for _, acc := range []*models.Account{&acc1, &acc2} {
@@ -367,8 +551,40 @@ func TestInsertTransfer(t *testing.T) {
 }
 
 func TestGetTransferByID(t *testing.T) {
-	acc1 := createRandomAccount()
-	acc2 := createRandomAccount()
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	user1 := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user1)
+	if err != nil {
+		t.Errorf("failed insert users 1 error:%s", err)
+	}
+
+	acc1 := createRandomAccount(user1.Username)
+
+	user2 := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err = testRepo.InsertUsers(context.Background(), user2)
+	if err != nil {
+		t.Errorf("failed insert users 2 error:%s", err)
+	}
+
+	acc2 := createRandomAccount(user2.Username)
 
 	// insert 2 new account
 	for _, acc := range []*models.Account{&acc1, &acc2} {
@@ -416,8 +632,40 @@ func TestGetTransferByID(t *testing.T) {
 }
 
 func TestGetListTransfers(t *testing.T) {
-	acc1 := createRandomAccount()
-	acc2 := createRandomAccount()
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	user1 := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), user1)
+	if err != nil {
+		t.Errorf("failed insert users 1 error:%s", err)
+	}
+
+	acc1 := createRandomAccount(user1.Username)
+
+	user2 := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err = testRepo.InsertUsers(context.Background(), user2)
+	if err != nil {
+		t.Errorf("failed insert users 2 error:%s", err)
+	}
+
+	acc2 := createRandomAccount(user2.Username)
 
 	// insert 2 new account
 	for _, acc := range []*models.Account{&acc1, &acc2} {
@@ -452,5 +700,224 @@ func TestGetListTransfers(t *testing.T) {
 
 	if len(listTf) < 10 {
 		t.Errorf("fialed len list transefer want %d got %d", 10, len(listTf))
+	}
+}
+
+func TestInsertUsers(t *testing.T) {
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	dataTest := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), dataTest)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	// get back the data
+	data, err := testRepo.GetUsersByUsername(context.Background(), dataTest.Username)
+	if err != nil {
+		t.Errorf("failed get users error:%s", err)
+	}
+
+	if dataTest.Username != data.Username {
+		t.Errorf("failed deffrent username, wan't %s got %s", dataTest.Username, data.Username)
+	}
+	if dataTest.HashedPassword != data.HashedPassword {
+		t.Errorf("failed deffrent hashed_password, wan't %s got %s", dataTest.HashedPassword, data.HashedPassword)
+	}
+	if dataTest.FullName != data.FullName {
+		t.Errorf("failed deffrent full_name, wan't %s got %s", dataTest.FullName, data.FullName)
+	}
+	if dataTest.Email != data.Email {
+		t.Errorf("failed deffrent email, wan't %s got %s", dataTest.Email, data.Email)
+	}
+}
+
+func TestGetUsersByUsername(t *testing.T) {
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	dataTest := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), dataTest)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	// get back the data
+	data, err := testRepo.GetUsersByUsername(context.Background(), dataTest.Username)
+	if err != nil {
+		t.Errorf("failed get users error:%s", err)
+	}
+
+	if dataTest.Username != data.Username {
+		t.Errorf("failed deffrent username, wan't %s got %s", dataTest.Username, data.Username)
+	}
+	if dataTest.HashedPassword != data.HashedPassword {
+		t.Errorf("failed deffrent hashed_password, wan't %s got %s", dataTest.HashedPassword, data.HashedPassword)
+	}
+	if dataTest.FullName != data.FullName {
+		t.Errorf("failed deffrent full_name, wan't %s got %s", dataTest.FullName, data.FullName)
+	}
+	if dataTest.Email != data.Email {
+		t.Errorf("failed deffrent email, wan't %s got %s", dataTest.Email, data.Email)
+	}
+}
+
+func TestGetUsersByEmail(t *testing.T) {
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	dataTest := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), dataTest)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	// get back the data
+	data, err := testRepo.GetUsersByEmail(context.Background(), dataTest.Email)
+	if err != nil {
+		t.Errorf("failed get users error:%s", err)
+	}
+
+	if dataTest.Username != data.Username {
+		t.Errorf("failed deffrent username, wan't %s got %s", dataTest.Username, data.Username)
+	}
+	if dataTest.HashedPassword != data.HashedPassword {
+		t.Errorf("failed deffrent hashed_password, wan't %s got %s", dataTest.HashedPassword, data.HashedPassword)
+	}
+	if dataTest.FullName != data.FullName {
+		t.Errorf("failed deffrent full_name, wan't %s got %s", dataTest.FullName, data.FullName)
+	}
+	if dataTest.Email != data.Email {
+		t.Errorf("failed deffrent email, wan't %s got %s", dataTest.Email, data.Email)
+	}
+}
+
+func TestUpdateUsers(t *testing.T) {
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	dataTest := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), dataTest)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	// update
+	dataTest.FullName = util.RandomOwner()
+
+	err = testRepo.UpdateUsers(context.Background(), dataTest)
+	if err != nil {
+		t.Errorf("failed update users balance error:%s", err)
+	}
+
+	// get back the data
+	data, err := testRepo.GetUsersByUsername(context.Background(), dataTest.Username)
+	if err != nil {
+		t.Errorf("failed get account error:%s", err)
+	}
+
+	if dataTest.Username != data.Username {
+		t.Errorf("failed deffrent username, wan't %s got %s", dataTest.Username, data.Username)
+	}
+	if dataTest.HashedPassword != data.HashedPassword {
+		t.Errorf("failed deffrent hashed_password, wan't %s got %s", dataTest.HashedPassword, data.HashedPassword)
+	}
+	if dataTest.FullName != data.FullName {
+		t.Errorf("failed deffrent full_name, wan't %s got %s", dataTest.FullName, data.FullName)
+	}
+	if dataTest.Email != data.Email {
+		t.Errorf("failed deffrent email, wan't %s got %s", dataTest.Email, data.Email)
+	}
+}
+
+func TestDeleteUsers(t *testing.T) {
+	hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+	dataTest := models.Users{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	// test insert
+	err := testRepo.InsertUsers(context.Background(), dataTest)
+	if err != nil {
+		t.Errorf("failed insert users error:%s", err)
+	}
+
+	// delete
+	err = testRepo.DeleteUsers(context.Background(), dataTest.Username)
+	if err != nil {
+		t.Errorf("failed delete users error:%s", err)
+	}
+
+	// get back the data
+	data, err := testRepo.GetUsersByUsername(context.Background(), dataTest.Username)
+	if err != nil {
+		t.Errorf("failed get users error:%s", err)
+	}
+
+	if data.Username != "" {
+		t.Errorf("failed username must be empty")
+	}
+}
+
+func TestGetListUsers(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		hashedPassword, _ := util.HashedPassword(util.RandomString(6))
+		dataTest := models.Users{
+			Username:       util.RandomOwner(),
+			HashedPassword: hashedPassword,
+			FullName:       util.RandomOwner(),
+			Email:          util.RandomEmail(),
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+		}
+
+		// test insert
+		err := testRepo.InsertUsers(context.Background(), dataTest)
+		if err != nil {
+			t.Errorf("failed insert users error:%s", err)
+		}
+	}
+
+	listData, err := testRepo.GetListUsers(context.Background(), 10, 0)
+	if err != nil {
+		t.Errorf("failed get list users error:%s", err)
+	}
+
+	if len(listData) < 10 {
+		t.Errorf("failed len data not 10 len:%d", len(listData))
 	}
 }

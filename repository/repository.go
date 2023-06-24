@@ -20,6 +20,13 @@ type Repository interface {
 	GetListTransfers(ctx context.Context, fromAccountID, toAccountID int64, limit, offset int) ([]*models.Transfer, error)
 	GetAccountByIdForUpdate(ctx context.Context, id int64) (models.Account, error)
 	AddAccountBalanceByID(ctx context.Context, amount, id int64) (models.Account, error)
+	InsertUsers(ctx context.Context, arg models.Users) error
+	GetUsersByUsername(ctx context.Context, username string) (models.Users, error)
+	GetListUsers(ctx context.Context, limit, offset int) ([]*models.Users, error)
+	UpdateUsers(ctx context.Context, arg models.Users) error
+	DeleteUsers(ctx context.Context, username string) error
+	GetAccountByOwnerAndCurrency(ctx context.Context, owner, currency string) (models.Account, error)
+	GetUsersByEmail(ctx context.Context, email string) (models.Users, error)
 }
 
 type DBTX interface {

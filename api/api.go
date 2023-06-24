@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ismail118/simple-bank/models"
+	"github.com/ismail118/simple-bank/util"
 	"net/http"
 )
 
@@ -24,6 +25,27 @@ func (s *Server) createAccount(ctx *gin.Context) {
 		Owner:    req.Owner,
 		Balance:  0,
 		Currency: req.Currency,
+	}
+
+	user, err := s.repo.GetUsersByUsername(ctx, acc.Owner)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	if user.Username == "" {
+		ctx.JSON(http.StatusForbidden, fmt.Sprintf("user with username %s not exists", acc.Owner))
+		return
+	}
+
+	a, err := s.repo.GetAccountByOwnerAndCurrency(ctx, acc.Owner, acc.Currency)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if a.ID > 1 {
+		ctx.JSON(http.StatusForbidden, fmt.Sprintf("account with owner %s and %s alredy exists", acc.Owner, acc.Currency))
+		return
 	}
 
 	newID, err := s.repo.InsertAccount(ctx, acc)
@@ -314,4 +336,184 @@ func (s *Server) transfer(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusAccepted, res)
+}
+
+type createUserRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+	FullName string `json:"full_name" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+}
+
+func (s *Server) createUser(ctx *gin.Context) {
+	var req createUserRequest
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	hashedPassword, err := util.HashedPassword(req.Password)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	user := models.Users{
+		Username:       req.Username,
+		HashedPassword: hashedPassword,
+		FullName:       req.FullName,
+		Email:          req.Email,
+	}
+
+	u, err := s.repo.GetUsersByUsername(ctx, user.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	if u.Username != "" {
+		ctx.JSON(http.StatusForbidden, fmt.Sprintf("user with username %s is exists", u.Username))
+		return
+	}
+
+	u, err = s.repo.GetUsersByEmail(ctx, req.Email)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	if u.Username != "" {
+		ctx.JSON(http.StatusNotFound, fmt.Sprintf("email %s already being userd", req.Email))
+		return
+	}
+
+	err = s.repo.InsertUsers(ctx, user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, "user created")
+}
+
+type getByUsernameRequest struct {
+	Username string `uri:"username" binding:"required"`
+}
+
+func (s *Server) getUsers(ctx *gin.Context) {
+	var req getByUsernameRequest
+
+	err := ctx.ShouldBindUri(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := s.repo.GetUsersByUsername(ctx, req.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	if user.Username == "" {
+		ctx.JSON(http.StatusNotFound, "users not found")
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, user)
+}
+
+func (s *Server) listUsers(ctx *gin.Context) {
+	var req listRequest
+
+	err := ctx.BindQuery(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	users, err := s.repo.GetListUsers(ctx,
+		req.Size,
+		(req.Page-1)*req.Size,
+	)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, users)
+}
+
+type updateUsersRequest struct {
+	Username string `json:"username" binding:"required"`
+	FullName string `json:"full_name" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+}
+
+func (s *Server) updateUsers(ctx *gin.Context) {
+	var req updateUsersRequest
+
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := s.repo.GetUsersByUsername(ctx, req.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	if user.Username == "" {
+		ctx.JSON(http.StatusNotFound, "users not found")
+		return
+	}
+
+	if user.Email != req.Email {
+		u, err := s.repo.GetUsersByEmail(ctx, req.Email)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+		if u.Username != "" {
+			ctx.JSON(http.StatusNotFound, fmt.Sprintf("email %s already being userd", req.Email))
+			return
+		}
+	}
+
+	user.FullName = req.FullName
+	user.Email = req.Email
+
+	err = s.repo.UpdateUsers(ctx, user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, req)
+}
+
+func (s *Server) deleteUsers(ctx *gin.Context) {
+	var req getByUsernameRequest
+
+	err := ctx.ShouldBindUri(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := s.repo.GetUsersByUsername(ctx, req.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	if user.Username == "" {
+		ctx.JSON(http.StatusNotFound, "user not found")
+		return
+	}
+
+	err = s.repo.DeleteUsers(ctx, user.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, "success delete users")
 }

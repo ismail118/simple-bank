@@ -50,6 +50,11 @@ func (r *PostgresRepositoryMock) GetAccountByID(ctx context.Context, id int64) (
 	return a, nil
 }
 
+func (r *PostgresRepositoryMock) GetAccountByOwnerAndCurrency(ctx context.Context, username, currency string) (models.Account, error) {
+	var a models.Account
+	return a, nil
+}
+
 // GetListAccounts return list accounts from database and error if exist
 func (r *PostgresRepositoryMock) GetListAccounts(ctx context.Context, limit, offset int) ([]*models.Account, error) {
 	items := []*models.Account{}
@@ -151,4 +156,57 @@ func (r *PostgresRepositoryMock) GetAccountByIdForUpdate(ctx context.Context, id
 func (r *PostgresRepositoryMock) AddAccountBalanceByID(ctx context.Context, amount, id int64) (models.Account, error) {
 	var a models.Account
 	return a, nil
+}
+
+func (r *PostgresRepositoryMock) InsertUsers(ctx context.Context, arg models.Users) error {
+	return nil
+}
+
+func (r *PostgresRepositoryMock) GetUsersByUsername(ctx context.Context, username string) (models.Users, error) {
+	var a models.Users = models.Users{
+		Username:       username,
+		HashedPassword: "some password",
+		FullName:       "some name",
+		Email:          "some@email.com",
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+	if username == "user" {
+		a = models.Users{}
+	}
+	return a, nil
+}
+
+func (r *PostgresRepositoryMock) GetUsersByEmail(ctx context.Context, email string) (models.Users, error) {
+	var a models.Users = models.Users{
+		Username:       "username",
+		HashedPassword: "some password",
+		FullName:       "some name",
+		Email:          email,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+	if email == "notexists@gmail.com" {
+		a = models.Users{}
+	}
+	return a, nil
+}
+
+func (r *PostgresRepositoryMock) GetListUsers(ctx context.Context, limit, offset int) ([]*models.Users, error) {
+	items := []*models.Users{}
+	if offset > 1000 {
+		return items, sql.ErrConnDone
+	}
+	return items, nil
+}
+
+func (r *PostgresRepositoryMock) UpdateUsers(ctx context.Context, arg models.Users) error {
+	if arg.Username == "error" {
+		return sql.ErrConnDone
+	}
+	return nil
+}
+
+func (r *PostgresRepositoryMock) DeleteUsers(ctx context.Context, username string) error {
+	return nil
 }

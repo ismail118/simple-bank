@@ -36,6 +36,13 @@ func NewServer(store repository.Store, repo repository.Repository) Server {
 	router.GET("/transfer", server.listTransfer)
 	router.POST("/transfer", server.transfer)
 
+	//auth := router.Group("/api")
+	router.POST("/users", server.createUser)
+	router.GET("/users/:username", server.getUsers)
+	router.GET("/users", server.listUsers)
+	router.PUT("/users", server.updateUsers)
+	router.DELETE("/users/:username", server.deleteUsers)
+
 	server.router = router
 	return server
 }

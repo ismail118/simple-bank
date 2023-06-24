@@ -474,3 +474,177 @@ func Test_transfer(t *testing.T) {
 		}
 	}
 }
+
+func Test_createUsers(t *testing.T) {
+	testCases := []struct {
+		Name                  string
+		ReqBody               map[string]interface{}
+		ExpectationStatusCode int
+	}{
+		{
+			Name: "Accepted",
+			ReqBody: map[string]interface{}{
+				"username":  "user",
+				"password":  "secret",
+				"full_name": "david jones",
+				"email":     "some@email.com",
+			},
+			ExpectationStatusCode: http.StatusAccepted,
+		},
+	}
+
+	for _, tc := range testCases {
+		reqBody, _ := json.Marshal(tc.ReqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/users", bytes.NewReader(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		rr := httptest.NewRecorder()
+
+		serverTest.router.ServeHTTP(rr, req)
+
+		if rr.Code != tc.ExpectationStatusCode {
+			t.Fatalf("failed %s wrong response code, want %d got %d", tc.Name, tc.ExpectationStatusCode, rr.Code)
+		}
+	}
+}
+
+func Test_getUsers(t *testing.T) {
+	testCases := []struct {
+		Name                  string
+		Username              string
+		ExpectationStatusCode int
+	}{
+		{
+			Name:                  "Accepted",
+			Username:              "ismail",
+			ExpectationStatusCode: http.StatusAccepted,
+		},
+		{
+			Name:                  "NotFound",
+			Username:              "user",
+			ExpectationStatusCode: http.StatusNotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", tc.Username), nil)
+		req.Header.Set("Content-Type", "text/plain")
+
+		rr := httptest.NewRecorder()
+
+		serverTest.router.ServeHTTP(rr, req)
+
+		if rr.Code != tc.ExpectationStatusCode {
+			t.Fatalf("failed %s wrong response code, want %d got %d", tc.Name, tc.ExpectationStatusCode, rr.Code)
+		}
+	}
+}
+
+func Test_listUsers(t *testing.T) {
+	testCase := []struct {
+		Name                  string
+		QueryParams           string
+		ExpectationStatusCode int
+	}{
+		{
+			Name:                  "Accepted",
+			QueryParams:           "page=1&size=10",
+			ExpectationStatusCode: http.StatusAccepted,
+		},
+		{
+			Name:                  "BadRequest",
+			ExpectationStatusCode: http.StatusBadRequest,
+		},
+		{
+			Name:                  "ServerError",
+			QueryParams:           "page=1001&size=10",
+			ExpectationStatusCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range testCase {
+		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users?%s", tc.QueryParams), nil)
+		req.Header.Set("Content-Type", "text/plain")
+
+		rr := httptest.NewRecorder()
+
+		serverTest.router.ServeHTTP(rr, req)
+
+		if rr.Code != tc.ExpectationStatusCode {
+			t.Fatalf("failed %s wrong response code, want %d got %d", tc.Name, tc.ExpectationStatusCode, rr.Code)
+		}
+	}
+}
+
+func Test_updateUsers(t *testing.T) {
+	testCase := []struct {
+		Name                  string
+		ReqBody               map[string]interface{}
+		ExpectationStatusCode int
+	}{
+		{
+			Name: "Accepted",
+			ReqBody: map[string]interface{}{
+				"username":  "ismail",
+				"full_name": "ismail",
+				"email":     "notexists@gmail.com",
+			},
+			ExpectationStatusCode: http.StatusAccepted,
+		},
+		{
+			Name: "BadRequest",
+			ReqBody: map[string]interface{}{
+				"username": "ismail",
+				"email":    "some@email.com",
+			},
+			ExpectationStatusCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, tc := range testCase {
+		body, _ := json.Marshal(tc.ReqBody)
+		reqBody := bytes.NewReader(body)
+		req, _ := http.NewRequest(http.MethodPut, "/users", reqBody)
+		req.Header.Set("Content-Type", "application/json")
+
+		rr := httptest.NewRecorder()
+
+		serverTest.router.ServeHTTP(rr, req)
+
+		if rr.Code != tc.ExpectationStatusCode {
+			t.Fatalf("failed %s wrong response code, want %d got %d", tc.Name, tc.ExpectationStatusCode, rr.Code)
+		}
+	}
+}
+
+func Test_deleteUsers(t *testing.T) {
+	testCases := []struct {
+		Name                  string
+		Username              string
+		ExpectationStatusCode int
+	}{
+		{
+			Name:                  "Accepted",
+			Username:              "ismail",
+			ExpectationStatusCode: http.StatusAccepted,
+		},
+		{
+			Name:                  "NotFound",
+			Username:              "user",
+			ExpectationStatusCode: http.StatusNotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		req, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("/users/%s", tc.Username), nil)
+		req.Header.Set("Content-Type", "text/plain")
+
+		rr := httptest.NewRecorder()
+
+		serverTest.router.ServeHTTP(rr, req)
+
+		if rr.Code != tc.ExpectationStatusCode {
+			t.Fatalf("failed %s wrong response code, want %d got %d", tc.Name, tc.ExpectationStatusCode, rr.Code)
+		}
+	}
+}
