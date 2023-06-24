@@ -487,7 +487,7 @@ func Test_createUsers(t *testing.T) {
 				"username":  "user",
 				"password":  "secret",
 				"full_name": "david jones",
-				"email":     "some@email.com",
+				"email":     "notexists@gmail.com",
 			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
