@@ -391,7 +391,13 @@ func (s *Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusAccepted, "user created")
+	u, err = s.repo.GetUsersByUsername(ctx, user.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, u)
 }
 
 type getByUsernameRequest struct {
@@ -516,4 +522,53 @@ func (s *Server) deleteUsers(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusAccepted, "success delete users")
+}
+
+type loginUserRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type loginUserResponse struct {
+	AccessToken string `json:"access_token"`
+	User        models.Users
+}
+
+func (s *Server) loginUser(ctx *gin.Context) {
+	var req loginUserRequest
+
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := s.repo.GetUsersByUsername(ctx, req.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	if user.Username == "" {
+		ctx.JSON(http.StatusNotFound, "username not found")
+		return
+	}
+
+	err = util.ComparePassword(user.HashedPassword, req.Password)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, "wrong password")
+		return
+	}
+
+	accessToken, err := s.tokenMaker.CreateToken(user.Username, s.config.AccessTokenDuration)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	resp := loginUserResponse{
+		AccessToken: accessToken,
+		User:        user,
+	}
+
+	ctx.JSON(http.StatusAccepted, resp)
 }
