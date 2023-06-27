@@ -1015,6 +1015,7 @@ func Test_deleteUsers(t *testing.T) {
 		req.Header.Set("Content-Type", "text/plain")
 
 		tc.setupRequest(t, req, tokenMaker)
+
 		rr := httptest.NewRecorder()
 
 		serverTest.router.ServeHTTP(rr, req)
