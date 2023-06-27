@@ -9,7 +9,7 @@ import (
 type Repository interface {
 	InsertAccount(ctx context.Context, arg models.Account) (int64, error)
 	GetAccountByID(ctx context.Context, id int64) (models.Account, error)
-	GetListAccounts(ctx context.Context, limit, offset int) ([]*models.Account, error)
+	GetListAccounts(ctx context.Context, owner string, limit, offset int) ([]*models.Account, error)
 	UpdateAccount(ctx context.Context, arg models.Account) error
 	DeleteAccount(ctx context.Context, id int64) error
 	InsertEntry(ctx context.Context, arg models.Entry) (int64, error)

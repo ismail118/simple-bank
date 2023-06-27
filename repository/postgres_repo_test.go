@@ -256,6 +256,8 @@ func TestDeleteAccount(t *testing.T) {
 }
 
 func TestGetListAccounts(t *testing.T) {
+	var lastAccount models.Account
+
 	for i := 0; i < 10; i++ {
 		hashedPassword, _ := util.HashedPassword(util.RandomString(6))
 		user := models.Users{
@@ -283,14 +285,16 @@ func TestGetListAccounts(t *testing.T) {
 		if newID < 1 {
 			t.Errorf("failed renturn less than 1 newID:%d", newID)
 		}
+
+		lastAccount = dataTest
 	}
 
-	listData, err := testRepo.GetListAccounts(context.Background(), 10, 0)
+	listData, err := testRepo.GetListAccounts(context.Background(), lastAccount.Owner, 10, 0)
 	if err != nil {
 		t.Errorf("failed get list accounts error:%s", err)
 	}
 
-	if len(listData) < 10 {
+	if len(listData) < 1 {
 		t.Errorf("failed len data not 10 len:%d", len(listData))
 	}
 }

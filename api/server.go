@@ -48,27 +48,29 @@ func (server *Server) setupRouter() {
 	router := gin.Default()
 
 	// add routes to router
-	router.POST("/accounts", server.createAccount)
-	router.GET("/accounts/:id", server.getAccount)
-	router.GET("/accounts", server.listAccounts)
-	router.PUT("/accounts", server.updateAccount)
-	router.DELETE("/accounts/:id", server.deleteAccount)
-
-	router.GET("/entries/:id", server.getEntry)
-	router.GET("/entries", server.listEntries)
-
-	router.GET("/transfer/:id", server.getTransfer)
-	router.GET("/transfer", server.listTransfer)
-	router.POST("/transfer", server.transfer)
-
-	//auth := router.Group("/api")
+	// no need auth
 	router.POST("/users", server.createUser)
-	router.GET("/users/:username", server.getUsers)
-	router.GET("/users", server.listUsers)
-	router.PUT("/users", server.updateUsers)
-	router.DELETE("/users/:username", server.deleteUsers)
-
 	router.POST("/users/login", server.loginUser)
+
+	// need auth
+	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
+	authRoutes.POST("/accounts", server.createAccount)
+	authRoutes.GET("/accounts/:id", server.getAccount)
+	authRoutes.GET("/accounts", server.listAccounts)
+	authRoutes.PUT("/accounts", server.updateAccount)
+	authRoutes.DELETE("/accounts/:id", server.deleteAccount)
+
+	authRoutes.GET("/entries/:id", server.getEntry)
+	authRoutes.GET("/entries", server.listEntries)
+
+	authRoutes.GET("/transfer/:id", server.getTransfer)
+	authRoutes.GET("/transfer", server.listTransfer)
+	authRoutes.POST("/transfer", server.transfer)
+
+	authRoutes.GET("/users/:username", server.getUsers)
+	authRoutes.GET("/users", server.listUsers)
+	authRoutes.PUT("/users", server.updateUsers)
+	authRoutes.DELETE("/users/:username", server.deleteUsers)
 
 	server.router = router
 }

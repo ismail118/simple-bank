@@ -38,7 +38,7 @@ func (r *PostgresRepositoryMock) GetAccountByID(ctx context.Context, id int64) (
 	if id == 2 || id == 3 {
 		a = models.Account{
 			ID:        id,
-			Owner:     "some owner",
+			Owner:     "some-user",
 			Balance:   100,
 			Currency:  "USD",
 			CreatedAt: time.Now(),
@@ -56,7 +56,7 @@ func (r *PostgresRepositoryMock) GetAccountByOwnerAndCurrency(ctx context.Contex
 }
 
 // GetListAccounts return list accounts from database and error if exist
-func (r *PostgresRepositoryMock) GetListAccounts(ctx context.Context, limit, offset int) ([]*models.Account, error) {
+func (r *PostgresRepositoryMock) GetListAccounts(ctx context.Context, owner string, limit, offset int) ([]*models.Account, error) {
 	items := []*models.Account{}
 	if offset > 1000 {
 		return items, sql.ErrConnDone
@@ -92,7 +92,7 @@ func (r *PostgresRepositoryMock) GetEntryByID(ctx context.Context, id int64) (mo
 	if id == 2 {
 		a = models.Entry{
 			ID:        id,
-			AccountID: 1,
+			AccountID: 2,
 			Amount:    100,
 			CreatedAt: time.Now(),
 		}
@@ -179,7 +179,7 @@ func (r *PostgresRepositoryMock) GetUsersByUsername(ctx context.Context, usernam
 
 func (r *PostgresRepositoryMock) GetUsersByEmail(ctx context.Context, email string) (models.Users, error) {
 	var a models.Users = models.Users{
-		Username:       "username",
+		Username:       "some-owner",
 		HashedPassword: "some password",
 		FullName:       "some name",
 		Email:          email,

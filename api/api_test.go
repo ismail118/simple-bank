@@ -4,42 +4,77 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ismail118/simple-bank/token"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func Test_getAccount(t *testing.T) {
 	testCases := []struct {
 		Name               string
 		AccountID          int64
+		setupRequest       func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectedStatusCode int
 	}{
 		{
-			Name:               "Accepted",
-			AccountID:          2,
+			Name:      "Accepted",
+			AccountID: 2,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusAccepted,
 		},
 		{
-			Name:               "BadReq",
-			AccountID:          0,
+			Name:      "BadReq",
+			AccountID: 0,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusBadRequest,
 		},
 		{
-			Name:               "ServerError",
-			AccountID:          1001,
+			Name:      "ServerError",
+			AccountID: 1001,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusInternalServerError,
 		},
 		{
-			Name:               "NotFound",
-			AccountID:          1,
+			Name:      "NotFound",
+			AccountID: 1,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusNotFound,
 		},
 	}
 
+	tokenMaker := serverTest.tokenMaker
+
 	for _, tc := range testCases {
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/accounts/%d", tc.AccountID), nil)
 		req.Header.Set("Content-Type", "text/plain")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -55,39 +90,48 @@ func Test_createAccount(t *testing.T) {
 	testCase := []struct {
 		Name                  string
 		ReqBody               map[string]interface{}
+		setupRequest          func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectationStatusCode int
 	}{
 		{
 			Name: "Accepted",
 			ReqBody: map[string]interface{}{
-				"owner":    "ismail",
 				"currency": "USD",
+			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
 		{
 			Name: "BadRequest",
 			ReqBody: map[string]interface{}{
-				"owner":    "ismail",
 				"currency": "WRONG",
+			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
 			ExpectationStatusCode: http.StatusBadRequest,
 		},
-		{
-			Name: "ServerError",
-			ReqBody: map[string]interface{}{
-				"owner":    "test-error-db",
-				"currency": "USD",
-			},
-			ExpectationStatusCode: http.StatusInternalServerError,
-		},
 	}
+
+	tokenMaker := serverTest.tokenMaker
 
 	for _, tc := range testCase {
 		body, _ := json.Marshal(tc.ReqBody)
 		reqBody := bytes.NewReader(body)
 		req, _ := http.NewRequest(http.MethodPost, "/accounts", reqBody)
 		req.Header.Set("Content-Type", "application/json")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -103,27 +147,53 @@ func Test_listAccount(t *testing.T) {
 	testCase := []struct {
 		Name                  string
 		QueryParams           string
+		setupRequest          func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectationStatusCode int
 	}{
 		{
-			Name:                  "Accepted",
-			QueryParams:           "page=1&size=10",
+			Name:        "Accepted",
+			QueryParams: "page=1&size=10",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
 		{
-			Name:                  "BadRequest",
+			Name: "BadRequest",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusBadRequest,
 		},
 		{
-			Name:                  "ServerError",
-			QueryParams:           "page=1001&size=10",
+			Name:        "ServerError",
+			QueryParams: "page=1001&size=10",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusInternalServerError,
 		},
 	}
 
+	tokenMaker := serverTest.tokenMaker
+
 	for _, tc := range testCase {
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/accounts?%s", tc.QueryParams), nil)
 		req.Header.Set("Content-Type", "text/plain")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -139,24 +209,37 @@ func Test_updateAccount(t *testing.T) {
 	testCase := []struct {
 		Name                  string
 		ReqBody               map[string]interface{}
+		setupRequest          func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectationStatusCode int
 	}{
 		{
 			Name: "Accepted",
 			ReqBody: map[string]interface{}{
 				"id":       2,
-				"owner":    "ismail",
 				"balance":  100,
 				"currency": "USD",
+			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
 		{
 			Name: "BadRequest",
 			ReqBody: map[string]interface{}{
-				"owner":    "ismail",
 				"balance":  100,
 				"currency": "USD",
+			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
 			ExpectationStatusCode: http.StatusBadRequest,
 		},
@@ -164,9 +247,15 @@ func Test_updateAccount(t *testing.T) {
 			Name: "ServerError",
 			ReqBody: map[string]interface{}{
 				"id":       1001,
-				"owner":    "ismail",
 				"balance":  100,
 				"currency": "USD",
+			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
 			ExpectationStatusCode: http.StatusInternalServerError,
 		},
@@ -174,9 +263,15 @@ func Test_updateAccount(t *testing.T) {
 			Name: "ServerErrorUpdate",
 			ReqBody: map[string]interface{}{
 				"id":       3,
-				"owner":    "ismail",
 				"balance":  100,
 				"currency": "USD",
+			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
 			ExpectationStatusCode: http.StatusInternalServerError,
 		},
@@ -184,19 +279,29 @@ func Test_updateAccount(t *testing.T) {
 			Name: "Accepted",
 			ReqBody: map[string]interface{}{
 				"id":       1000,
-				"owner":    "ismail",
 				"balance":  100,
 				"currency": "USD",
+			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
 			ExpectationStatusCode: http.StatusNotFound,
 		},
 	}
+
+	tokenMaker := serverTest.tokenMaker
 
 	for _, tc := range testCase {
 		body, _ := json.Marshal(tc.ReqBody)
 		reqBody := bytes.NewReader(body)
 		req, _ := http.NewRequest(http.MethodPut, "/accounts", reqBody)
 		req.Header.Set("Content-Type", "application/json")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -212,39 +317,78 @@ func Test_deleteAccount(t *testing.T) {
 	testCases := []struct {
 		Name               string
 		AccountID          int64
+		setupRequest       func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectedStatusCode int
 	}{
 		{
-			Name:               "Accepted",
-			AccountID:          2,
+			Name:      "Accepted",
+			AccountID: 2,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusAccepted,
 		},
 		{
-			Name:               "BadReq",
-			AccountID:          0,
+			Name:      "BadReq",
+			AccountID: 0,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusBadRequest,
 		},
 		{
-			Name:               "ServerError",
-			AccountID:          1001,
+			Name:      "ServerError",
+			AccountID: 1001,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusInternalServerError,
 		},
 		{
-			Name:               "ServerErrorDelete",
-			AccountID:          3,
+			Name:      "ServerErrorDelete",
+			AccountID: 3,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusInternalServerError,
 		},
 		{
-			Name:               "NotFound",
-			AccountID:          1,
+			Name:      "NotFound",
+			AccountID: 1,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusNotFound,
 		},
 	}
+
+	tokenMaker := serverTest.tokenMaker
 
 	for _, tc := range testCases {
 		req, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("/accounts/%d", tc.AccountID), nil)
 		req.Header.Set("Content-Type", "text/plain")
 
+		tc.setupRequest(t, req, tokenMaker)
 		rr := httptest.NewRecorder()
 
 		serverTest.router.ServeHTTP(rr, req)
@@ -259,34 +403,66 @@ func Test_getEntry(t *testing.T) {
 	testCases := []struct {
 		Name               string
 		AccountID          int64
+		setupRequest       func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectedStatusCode int
 	}{
 		{
-			Name:               "Accepted",
-			AccountID:          2,
+			Name:      "Accepted",
+			AccountID: 2,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusAccepted,
 		},
 		{
-			Name:               "BadReq",
-			AccountID:          0,
+			Name:      "BadReq",
+			AccountID: 0,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusBadRequest,
 		},
 		{
-			Name:               "ServerError",
-			AccountID:          1001,
+			Name:      "ServerError",
+			AccountID: 1001,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusInternalServerError,
 		},
 		{
-			Name:               "NotFound",
-			AccountID:          1,
+			Name:      "NotFound",
+			AccountID: 1,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusNotFound,
 		},
 	}
+
+	tokenMaker := serverTest.tokenMaker
 
 	for _, tc := range testCases {
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/entries/%d", tc.AccountID), nil)
 		req.Header.Set("Content-Type", "text/plain")
 
+		tc.setupRequest(t, req, tokenMaker)
 		rr := httptest.NewRecorder()
 
 		serverTest.router.ServeHTTP(rr, req)
@@ -301,27 +477,53 @@ func Test_listEntries(t *testing.T) {
 	testCase := []struct {
 		Name                  string
 		QueryParams           string
+		setupRequest          func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectationStatusCode int
 	}{
 		{
-			Name:                  "Accepted",
-			QueryParams:           "account_id=1&page=1&size=10",
+			Name:        "Accepted",
+			QueryParams: "account_id=2&page=1&size=10",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
 		{
-			Name:                  "BadRequest",
+			Name: "BadRequest",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusBadRequest,
 		},
 		{
-			Name:                  "ServerError",
-			QueryParams:           "account_id=1&page=1001&size=10",
+			Name:        "ServerError",
+			QueryParams: "account_id=2&page=1001&size=10",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusInternalServerError,
 		},
 	}
 
+	tokenMaker := serverTest.tokenMaker
+
 	for _, tc := range testCase {
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/entries?%s", tc.QueryParams), nil)
 		req.Header.Set("Content-Type", "text/plain")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -336,34 +538,67 @@ func Test_listEntries(t *testing.T) {
 func Test_getTransfer(t *testing.T) {
 	testCases := []struct {
 		Name               string
-		AccountID          int64
+		TransferID         int64
+		setupRequest       func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectedStatusCode int
 	}{
 		{
-			Name:               "Accepted",
-			AccountID:          2,
+			Name:       "Accepted",
+			TransferID: 2,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusAccepted,
 		},
 		{
-			Name:               "BadReq",
-			AccountID:          0,
+			Name:       "BadReq",
+			TransferID: 0,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusBadRequest,
 		},
 		{
-			Name:               "ServerError",
-			AccountID:          1001,
+			Name:       "ServerError",
+			TransferID: 1001,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusInternalServerError,
 		},
 		{
-			Name:               "NotFound",
-			AccountID:          1,
+			Name:       "NotFound",
+			TransferID: 1,
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectedStatusCode: http.StatusNotFound,
 		},
 	}
 
+	tokenMaker := serverTest.tokenMaker
+
 	for _, tc := range testCases {
-		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/transfer/%d", tc.AccountID), nil)
+		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/transfer/%d", tc.TransferID), nil)
 		req.Header.Set("Content-Type", "text/plain")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -379,27 +614,53 @@ func Test_listTransfer(t *testing.T) {
 	testCase := []struct {
 		Name                  string
 		QueryParams           string
+		setupRequest          func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectationStatusCode int
 	}{
 		{
-			Name:                  "Accepted",
-			QueryParams:           "from_account_id=1&to_account_id=2&page=1&size=10",
+			Name:        "Accepted",
+			QueryParams: "from_account_id=1&to_account_id=2&page=1&size=10",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
 		{
-			Name:                  "BadRequest",
+			Name: "BadRequest",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusBadRequest,
 		},
 		{
-			Name:                  "ServerError",
-			QueryParams:           "from_account_id=1&to_account_id=2&page=1001&size=10",
+			Name:        "ServerError",
+			QueryParams: "from_account_id=1&to_account_id=2&page=1001&size=10",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusInternalServerError,
 		},
 	}
 
+	tokenMaker := serverTest.tokenMaker
+
 	for _, tc := range testCase {
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/transfer?%s", tc.QueryParams), nil)
 		req.Header.Set("Content-Type", "text/plain")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -415,6 +676,7 @@ func Test_transfer(t *testing.T) {
 	testCase := []struct {
 		Name                  string
 		ReqBody               map[string]interface{}
+		setupRequest          func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectationStatusCode int
 	}{
 		{
@@ -424,6 +686,13 @@ func Test_transfer(t *testing.T) {
 				"to_account_id":   3,
 				"amount":          10,
 				"currency":        "USD",
+			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
@@ -435,6 +704,13 @@ func Test_transfer(t *testing.T) {
 				"amount":          0,
 				"currency":        "USD",
 			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusBadRequest,
 		},
 		{
@@ -444,6 +720,13 @@ func Test_transfer(t *testing.T) {
 				"to_account_id":   3,
 				"amount":          10,
 				"currency":        "USD",
+			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
 			ExpectationStatusCode: http.StatusInternalServerError,
 		},
@@ -455,15 +738,26 @@ func Test_transfer(t *testing.T) {
 				"amount":          10,
 				"currency":        "USD",
 			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusInternalServerError,
 		},
 	}
+
+	tokenMaker := serverTest.tokenMaker
 
 	for _, tc := range testCase {
 		body, _ := json.Marshal(tc.ReqBody)
 		reqBody := bytes.NewReader(body)
 		req, _ := http.NewRequest(http.MethodPost, "/transfer", reqBody)
 		req.Header.Set("Content-Type", "application/json")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -512,23 +806,42 @@ func Test_getUsers(t *testing.T) {
 	testCases := []struct {
 		Name                  string
 		Username              string
+		setupRequest          func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectationStatusCode int
 	}{
 		{
-			Name:                  "Accepted",
-			Username:              "ismail",
+			Name:     "Accepted",
+			Username: "some-user",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
 		{
-			Name:                  "NotFound",
-			Username:              "user",
+			Name:     "NotFound",
+			Username: "user",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusNotFound,
 		},
 	}
 
+	tokenMaker := serverTest.tokenMaker
+
 	for _, tc := range testCases {
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", tc.Username), nil)
 		req.Header.Set("Content-Type", "text/plain")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -544,27 +857,53 @@ func Test_listUsers(t *testing.T) {
 	testCase := []struct {
 		Name                  string
 		QueryParams           string
+		setupRequest          func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectationStatusCode int
 	}{
 		{
-			Name:                  "Accepted",
-			QueryParams:           "page=1&size=10",
+			Name:        "Accepted",
+			QueryParams: "page=1&size=10",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
 		{
-			Name:                  "BadRequest",
+			Name: "BadRequest",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusBadRequest,
 		},
 		{
-			Name:                  "ServerError",
-			QueryParams:           "page=1001&size=10",
+			Name:        "ServerError",
+			QueryParams: "page=1001&size=10",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusInternalServerError,
 		},
 	}
 
+	tokenMaker := serverTest.tokenMaker
+
 	for _, tc := range testCase {
 		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users?%s", tc.QueryParams), nil)
 		req.Header.Set("Content-Type", "text/plain")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -580,14 +919,22 @@ func Test_updateUsers(t *testing.T) {
 	testCase := []struct {
 		Name                  string
 		ReqBody               map[string]interface{}
+		setupRequest          func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectationStatusCode int
 	}{
 		{
 			Name: "Accepted",
 			ReqBody: map[string]interface{}{
-				"username":  "ismail",
+				"username":  "some-user",
 				"full_name": "ismail",
 				"email":     "notexists@gmail.com",
+			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
@@ -597,15 +944,26 @@ func Test_updateUsers(t *testing.T) {
 				"username": "ismail",
 				"email":    "some@email.com",
 			},
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusBadRequest,
 		},
 	}
+
+	tokenMaker := serverTest.tokenMaker
 
 	for _, tc := range testCase {
 		body, _ := json.Marshal(tc.ReqBody)
 		reqBody := bytes.NewReader(body)
 		req, _ := http.NewRequest(http.MethodPut, "/users", reqBody)
 		req.Header.Set("Content-Type", "application/json")
+
+		tc.setupRequest(t, req, tokenMaker)
 
 		rr := httptest.NewRecorder()
 
@@ -621,24 +979,42 @@ func Test_deleteUsers(t *testing.T) {
 	testCases := []struct {
 		Name                  string
 		Username              string
+		setupRequest          func(t *testing.T, r *http.Request, tokenMaker token.Maker)
 		ExpectationStatusCode int
 	}{
 		{
-			Name:                  "Accepted",
-			Username:              "ismail",
+			Name:     "Accepted",
+			Username: "some-user",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusAccepted,
 		},
 		{
-			Name:                  "NotFound",
-			Username:              "user",
+			Name:     "NotFound",
+			Username: "user",
+			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
+				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				if err != nil {
+					t.Fatalf("failed create token error:%s", err)
+				}
+				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
+			},
 			ExpectationStatusCode: http.StatusNotFound,
 		},
 	}
+
+	tokenMaker := serverTest.tokenMaker
 
 	for _, tc := range testCases {
 		req, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("/users/%s", tc.Username), nil)
 		req.Header.Set("Content-Type", "text/plain")
 
+		tc.setupRequest(t, req, tokenMaker)
 		rr := httptest.NewRecorder()
 
 		serverTest.router.ServeHTTP(rr, req)

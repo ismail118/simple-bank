@@ -1,15 +1,16 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ismail118/simple-bank/models"
+	"github.com/ismail118/simple-bank/token"
 	"github.com/ismail118/simple-bank/util"
 	"net/http"
 )
 
 type createAccountRequest struct {
-	Owner    string `json:"owner" binding:"required"`
 	Currency string `json:"currency" binding:"required,oneof=USD EUR"`
 }
 
@@ -21,8 +22,11 @@ func (s *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
+	// authorization
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
 	acc := models.Account{
-		Owner:    req.Owner,
+		Owner:    authPayload.Username,
 		Balance:  0,
 		Currency: req.Currency,
 	}
@@ -81,6 +85,14 @@ func (s *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
+	// authorization
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if acc.Owner != authPayload.Username {
+		err = errors.New("account doesn't belong to authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
 	ctx.JSON(http.StatusAccepted, acc)
 }
 
@@ -97,8 +109,11 @@ func (s *Server) listAccounts(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+	// authorization
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 
 	accounts, err := s.repo.GetListAccounts(ctx,
+		authPayload.Username,
 		req.Size,
 		(req.Page-1)*req.Size,
 	)
@@ -112,7 +127,6 @@ func (s *Server) listAccounts(ctx *gin.Context) {
 
 type updateAccountRequest struct {
 	ID       int64  `json:"id" binding:"required"`
-	Owner    string `json:"owner" binding:"required"`
 	Balance  int64  `json:"balance" binding:"required"`
 	Currency string `json:"currency" binding:"required"`
 }
@@ -136,7 +150,14 @@ func (s *Server) updateAccount(ctx *gin.Context) {
 		return
 	}
 
-	account.Owner = req.Owner
+	// authorization
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if account.Owner != authPayload.Username {
+		err = errors.New("account doesn't belong to authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
 	account.Balance = req.Balance
 	account.Currency = req.Currency
 
@@ -165,6 +186,14 @@ func (s *Server) deleteAccount(ctx *gin.Context) {
 	}
 	if account.ID < 1 {
 		ctx.JSON(http.StatusNotFound, "account not found")
+		return
+	}
+
+	// authorization
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if account.Owner != authPayload.Username {
+		err = errors.New("account doesn't belong to authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
 
@@ -197,6 +226,20 @@ func (s *Server) getEntry(ctx *gin.Context) {
 		return
 	}
 
+	account, err := s.repo.GetAccountByID(ctx, entry.AccountID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	// authorization
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if account.Owner != authPayload.Username {
+		err = errors.New("entry doesn't belong to authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
 	ctx.JSON(http.StatusAccepted, entry)
 }
 
@@ -212,6 +255,20 @@ func (s *Server) listEntries(ctx *gin.Context) {
 	err := ctx.BindQuery(&req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	account, err := s.repo.GetAccountByID(ctx, req.AccountID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	// authorization
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if account.Owner != authPayload.Username {
+		err = errors.New("entries doesn't belong to authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
 
@@ -248,6 +305,26 @@ func (s *Server) getTransfer(ctx *gin.Context) {
 		return
 	}
 
+	fAccount, err := s.repo.GetAccountByID(ctx, transfer.FromAccountID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	tAccount, err := s.repo.GetAccountByID(ctx, transfer.ToAccountID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	// authorization
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if (fAccount.Owner != authPayload.Username) && (tAccount.Owner != authPayload.Username) {
+		err = errors.New("transfer doesn't belong to authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
 	ctx.JSON(http.StatusAccepted, transfer)
 }
 
@@ -264,6 +341,26 @@ func (s *Server) listTransfer(ctx *gin.Context) {
 	err := ctx.BindQuery(&req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	fAccount, err := s.repo.GetAccountByID(ctx, req.FromAccountID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	tAccount, err := s.repo.GetAccountByID(ctx, req.ToAccountID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	// authorization
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if (fAccount.Owner != authPayload.Username) && (tAccount.Owner != authPayload.Username) {
+		err = errors.New("transfer doesn't belong to authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
 
@@ -321,6 +418,14 @@ func (s *Server) transfer(ctx *gin.Context) {
 	}
 	if fAccount.Currency != req.Currency {
 		ctx.JSON(http.StatusBadRequest, fmt.Sprintf("account %d mismatch: %s vs %s", tAccount.ID, tAccount.Currency, req.Currency))
+		return
+	}
+
+	// authorization
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if authPayload.Username != fAccount.Owner {
+		err = errors.New("from account doesn't belong to authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
 
@@ -423,6 +528,14 @@ func (s *Server) getUsers(ctx *gin.Context) {
 		return
 	}
 
+	// authorization
+	payload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if payload.Username != user.Username {
+		err = errors.New("user doesn't belong to user login")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
 	ctx.JSON(http.StatusAccepted, user)
 }
 
@@ -484,6 +597,14 @@ func (s *Server) updateUsers(ctx *gin.Context) {
 		}
 	}
 
+	// authorization
+	payload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if payload.Username != user.Username {
+		err = errors.New("user doesn't belong to user login")
+		ctx.JSON(http.StatusUnauthorized, err)
+		return
+	}
+
 	user.FullName = req.FullName
 	user.Email = req.Email
 
@@ -512,6 +633,13 @@ func (s *Server) deleteUsers(ctx *gin.Context) {
 	}
 	if user.Username == "" {
 		ctx.JSON(http.StatusNotFound, "user not found")
+		return
+	}
+
+	payload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if payload.Username != user.Username {
+		err = errors.New("user doesn't belong to user login")
+		ctx.JSON(http.StatusUnauthorized, err)
 		return
 	}
 

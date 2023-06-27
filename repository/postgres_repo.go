@@ -118,16 +118,18 @@ func (r *PostgresRepository) GetAccountByOwnerAndCurrency(ctx context.Context, o
 }
 
 // GetListAccounts return list accounts from database and error if exist
-func (r *PostgresRepository) GetListAccounts(ctx context.Context, limit, offset int) ([]*models.Account, error) {
+func (r *PostgresRepository) GetListAccounts(ctx context.Context, owner string, limit, offset int) ([]*models.Account, error) {
 	query := `
-	select id, owner, balance, currency, created_at from accounts 
+	select id, owner, balance, currency, created_at 
+	from accounts 
+	where owner = $1 
 	order by id
-	limit $1
-	offset $2
+	limit $2
+	offset $3
 `
 	items := []*models.Account{}
 
-	rows, err := r.db.QueryContext(ctx, query, limit, offset)
+	rows, err := r.db.QueryContext(ctx, query, owner, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -159,10 +161,10 @@ func (r *PostgresRepository) GetListAccounts(ctx context.Context, limit, offset 
 // UpdateAccount update account balance from given id and return error if exist
 func (r *PostgresRepository) UpdateAccount(ctx context.Context, arg models.Account) error {
 	query := `
-	update accounts set owner = $1, balance = $2, currency = $3
-	where id = $4
+	update accounts set balance = $1, currency = $2
+	where id = $3
 `
-	_, err := r.db.ExecContext(ctx, query, arg.Owner, arg.Balance, arg.Currency, arg.ID)
+	_, err := r.db.ExecContext(ctx, query, arg.Balance, arg.Currency, arg.ID)
 	if err != nil {
 		return err
 	}
