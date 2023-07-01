@@ -1,0 +1,28 @@
+services:
+  postgres-service:
+    image: postgres:14.7-alpine
+    environment:
+      - POSTGRES_DB=simple_bank
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      # Maps tcp port 5432 on service container to the host
+      - 5432:5432
+
+  simplebank:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    environment:
+      - DB_SOURCE=postgres://postgres:postgres@postgres-service:5432/simple_bank?sslmode=disable
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres-service
+    entrypoint: [
+      "/app/wait-for",
+      "postgres-service:5432",
+      "--",
+#      "/app/start.sh"
+    ]
+    command: [ "/app/simplebank" ]
