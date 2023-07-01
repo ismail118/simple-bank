@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-bank
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simple-bank
+  template:
+    metadata:
+      labels:
+        app: simple-bank
+    spec:
+      containers:
+        - name: simple-bank
+          image: "ismail118/simplebank:1.0.0"
+          env:
+            - name: DB_SOURCE
+              value: postgres://postgres:postgres@host.minikube.internal:5432/simple_bank?sslmode=disable
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 8080
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: simple-bank
+spec:
+  selector:
+    app: simple-bank
+  ports:
+    - protocol: TCP
+      name: main-port
+      port: 8080
+      targetPort: 8080
