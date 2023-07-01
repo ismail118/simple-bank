@@ -52,3 +52,6 @@ run_docker_container:
 
 compose_up_build:
 	docker-compose up --build
+
+minikube_tunnel:
+	minikube tunnel
