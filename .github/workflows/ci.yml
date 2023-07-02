@@ -56,3 +56,14 @@ jobs:
 
       - name: Build
         run: go build -v ./...
+
+      - name: Docker login
+        env:
+          DOCKER_USER: ${{secrets.DOCKER_USER}}
+          DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+        run: |
+          docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag ismail118/simplebank:$(date +%s) -t latest
+      - name: Docker push
+        run: docker push -a ismail118/simplebank
