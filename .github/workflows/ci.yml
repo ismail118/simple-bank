@@ -64,6 +64,6 @@ jobs:
         run: |
           docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag ismail118/simplebank:$(date +%s)
+        run: docker build . --file Dockerfile --tag ismail118/simplebank:$(date +%s) -t latest
       - name: Docker push
-        run: docker push ismail118/simplebank
+        run: docker push -a ismail118/simplebank
