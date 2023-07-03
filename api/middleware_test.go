@@ -21,9 +21,12 @@ func Test_authorizationMiddleware(t *testing.T) {
 		{
 			name: "Accepted",
 			setupAuth: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken(util.RandomOwner(), time.Minute)
+				token, payload, err := tokenMaker.CreateToken(util.RandomOwner(), time.Minute)
 				if err != nil {
 					t.Fatalf("failed crate token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
@@ -37,9 +40,12 @@ func Test_authorizationMiddleware(t *testing.T) {
 		{
 			name: "Auth-not-provided",
 			setupAuth: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken(util.RandomOwner(), time.Minute)
+				token, payload, err := tokenMaker.CreateToken(util.RandomOwner(), time.Minute)
 				if err != nil {
 					t.Fatalf("failed crate token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 
 				r.Header.Set("WRONG-HEADER", fmt.Sprintf("Bearer %s", token))
@@ -69,9 +75,12 @@ func Test_authorizationMiddleware(t *testing.T) {
 		{
 			name: "Auth-invalid-format",
 			setupAuth: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken(util.RandomOwner(), time.Minute)
+				token, payload, err := tokenMaker.CreateToken(util.RandomOwner(), time.Minute)
 				if err != nil {
 					t.Fatalf("failed crate token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("INVALID-FORMAT%s", token))
@@ -101,9 +110,12 @@ func Test_authorizationMiddleware(t *testing.T) {
 		{
 			name: "Auth-unsupported-type",
 			setupAuth: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken(util.RandomOwner(), time.Minute)
+				token, payload, err := tokenMaker.CreateToken(util.RandomOwner(), time.Minute)
 				if err != nil {
 					t.Fatalf("failed crate token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("UNSUPPORTED %s", token))
@@ -138,9 +150,12 @@ func Test_authorizationMiddleware(t *testing.T) {
 					t.Fatalf("failed setup NewPasetoMakerOther error:%s", err)
 				}
 
-				token, err := tokenMakerOther.CreateToken(util.RandomOwner(), time.Minute)
+				token, payload, err := tokenMakerOther.CreateToken(util.RandomOwner(), time.Minute)
 				if err != nil {
 					t.Fatalf("failed crate token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))

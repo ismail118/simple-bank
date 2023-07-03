@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"github.com/google/uuid"
 	"github.com/ismail118/simple-bank/models"
 	"time"
 )
@@ -209,4 +210,14 @@ func (r *PostgresRepositoryMock) UpdateUsers(ctx context.Context, arg models.Use
 
 func (r *PostgresRepositoryMock) DeleteUsers(ctx context.Context, username string) error {
 	return nil
+}
+
+func (r *PostgresRepositoryMock) InsertSessions(ctx context.Context, arg models.Sessions) error {
+	return nil
+}
+
+func (r *PostgresRepositoryMock) GetSessionsByID(ctx context.Context, id uuid.UUID) (models.Sessions, error) {
+	var s models.Sessions
+
+	return s, nil
 }
