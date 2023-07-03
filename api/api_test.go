@@ -22,9 +22,12 @@ func Test_getAccount(t *testing.T) {
 			Name:      "Accepted",
 			AccountID: 2,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -34,9 +37,12 @@ func Test_getAccount(t *testing.T) {
 			Name:      "BadReq",
 			AccountID: 0,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -46,9 +52,12 @@ func Test_getAccount(t *testing.T) {
 			Name:      "ServerError",
 			AccountID: 1001,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -58,9 +67,12 @@ func Test_getAccount(t *testing.T) {
 			Name:      "NotFound",
 			AccountID: 1,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -99,9 +111,12 @@ func Test_createAccount(t *testing.T) {
 				"currency": "USD",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -113,9 +128,12 @@ func Test_createAccount(t *testing.T) {
 				"currency": "WRONG",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -154,9 +172,12 @@ func Test_listAccount(t *testing.T) {
 			Name:        "Accepted",
 			QueryParams: "page=1&size=10",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -165,9 +186,12 @@ func Test_listAccount(t *testing.T) {
 		{
 			Name: "BadRequest",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -177,9 +201,12 @@ func Test_listAccount(t *testing.T) {
 			Name:        "ServerError",
 			QueryParams: "page=1001&size=10",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -220,9 +247,12 @@ func Test_updateAccount(t *testing.T) {
 				"currency": "USD",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -235,9 +265,12 @@ func Test_updateAccount(t *testing.T) {
 				"currency": "USD",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -251,9 +284,12 @@ func Test_updateAccount(t *testing.T) {
 				"currency": "USD",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -267,9 +303,12 @@ func Test_updateAccount(t *testing.T) {
 				"currency": "USD",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -283,9 +322,12 @@ func Test_updateAccount(t *testing.T) {
 				"currency": "USD",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -324,9 +366,12 @@ func Test_deleteAccount(t *testing.T) {
 			Name:      "Accepted",
 			AccountID: 2,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -336,9 +381,12 @@ func Test_deleteAccount(t *testing.T) {
 			Name:      "BadReq",
 			AccountID: 0,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -348,9 +396,12 @@ func Test_deleteAccount(t *testing.T) {
 			Name:      "ServerError",
 			AccountID: 1001,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -360,9 +411,12 @@ func Test_deleteAccount(t *testing.T) {
 			Name:      "ServerErrorDelete",
 			AccountID: 3,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -372,9 +426,12 @@ func Test_deleteAccount(t *testing.T) {
 			Name:      "NotFound",
 			AccountID: 1,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -410,9 +467,12 @@ func Test_getEntry(t *testing.T) {
 			Name:      "Accepted",
 			AccountID: 2,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -422,9 +482,12 @@ func Test_getEntry(t *testing.T) {
 			Name:      "BadReq",
 			AccountID: 0,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -434,9 +497,12 @@ func Test_getEntry(t *testing.T) {
 			Name:      "ServerError",
 			AccountID: 1001,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -446,9 +512,12 @@ func Test_getEntry(t *testing.T) {
 			Name:      "NotFound",
 			AccountID: 1,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -484,9 +553,12 @@ func Test_listEntries(t *testing.T) {
 			Name:        "Accepted",
 			QueryParams: "account_id=2&page=1&size=10",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -495,9 +567,12 @@ func Test_listEntries(t *testing.T) {
 		{
 			Name: "BadRequest",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -507,9 +582,12 @@ func Test_listEntries(t *testing.T) {
 			Name:        "ServerError",
 			QueryParams: "account_id=2&page=1001&size=10",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -546,9 +624,12 @@ func Test_getTransfer(t *testing.T) {
 			Name:       "Accepted",
 			TransferID: 2,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -558,9 +639,12 @@ func Test_getTransfer(t *testing.T) {
 			Name:       "BadReq",
 			TransferID: 0,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -570,9 +654,12 @@ func Test_getTransfer(t *testing.T) {
 			Name:       "ServerError",
 			TransferID: 1001,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -582,9 +669,12 @@ func Test_getTransfer(t *testing.T) {
 			Name:       "NotFound",
 			TransferID: 1,
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -621,9 +711,12 @@ func Test_listTransfer(t *testing.T) {
 			Name:        "Accepted",
 			QueryParams: "from_account_id=1&to_account_id=2&page=1&size=10",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -632,9 +725,12 @@ func Test_listTransfer(t *testing.T) {
 		{
 			Name: "BadRequest",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -644,9 +740,12 @@ func Test_listTransfer(t *testing.T) {
 			Name:        "ServerError",
 			QueryParams: "from_account_id=1&to_account_id=2&page=1001&size=10",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -688,9 +787,12 @@ func Test_transfer(t *testing.T) {
 				"currency":        "USD",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -705,9 +807,12 @@ func Test_transfer(t *testing.T) {
 				"currency":        "USD",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -722,9 +827,12 @@ func Test_transfer(t *testing.T) {
 				"currency":        "USD",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -739,9 +847,12 @@ func Test_transfer(t *testing.T) {
 				"currency":        "USD",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -813,9 +924,12 @@ func Test_getUsers(t *testing.T) {
 			Name:     "Accepted",
 			Username: "some-user",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -825,9 +939,12 @@ func Test_getUsers(t *testing.T) {
 			Name:     "NotFound",
 			Username: "user",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -864,9 +981,12 @@ func Test_listUsers(t *testing.T) {
 			Name:        "Accepted",
 			QueryParams: "page=1&size=10",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -875,9 +995,12 @@ func Test_listUsers(t *testing.T) {
 		{
 			Name: "BadRequest",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -887,9 +1010,12 @@ func Test_listUsers(t *testing.T) {
 			Name:        "ServerError",
 			QueryParams: "page=1001&size=10",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -930,9 +1056,12 @@ func Test_updateUsers(t *testing.T) {
 				"email":     "notexists@gmail.com",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -945,9 +1074,12 @@ func Test_updateUsers(t *testing.T) {
 				"email":    "some@email.com",
 			},
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -986,9 +1118,12 @@ func Test_deleteUsers(t *testing.T) {
 			Name:     "Accepted",
 			Username: "some-user",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},
@@ -998,9 +1133,12 @@ func Test_deleteUsers(t *testing.T) {
 			Name:     "NotFound",
 			Username: "user",
 			setupRequest: func(t *testing.T, r *http.Request, tokenMaker token.Maker) {
-				token, err := tokenMaker.CreateToken("some-user", time.Minute)
+				token, payload, err := tokenMaker.CreateToken("some-user", time.Minute)
 				if err != nil {
 					t.Fatalf("failed create token error:%s", err)
+				}
+				if payload == nil {
+					t.Fatalf("failed payload is empty")
 				}
 				r.Header.Set(authorizationHeaderKey, fmt.Sprintf("%s %s", authorizationTypeBearer, token))
 			},

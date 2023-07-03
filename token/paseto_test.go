@@ -20,15 +20,18 @@ func Test_PasetoMaker(t *testing.T) {
 	issuedAt := time.Now().Add(time.Second)
 	expiredAt := issuedAt.Add(duration)
 
-	token, err := maker.CreateToken(username, duration)
+	token, payload, err := maker.CreateToken(username, duration)
 	if err != nil {
 		t.Fatalf("failed create Token err:%s", err)
 	}
 	if token == "" {
 		t.Fatalf("failed token is empty")
 	}
+	if payload == nil {
+		t.Fatalf("failed payload is empty")
+	}
 
-	payload, err := maker.VerifyToken(token)
+	payload, err = maker.VerifyToken(token)
 	if err != nil {
 		t.Fatalf("failed verify Token err:%s", err)
 	}
@@ -56,15 +59,18 @@ func Test_ExpiredPaseto(t *testing.T) {
 		t.Fatalf("failed create JWTMaker err:%s", err)
 	}
 
-	token, err := maker.CreateToken(util.RandomOwner(), -time.Minute)
+	token, payload, err := maker.CreateToken(util.RandomOwner(), -time.Minute)
 	if err != nil {
 		t.Fatalf("failed create Token err:%s", err)
 	}
 	if token == "" {
 		t.Fatalf("failed token is empty")
 	}
+	if payload == nil {
+		t.Fatalf("failed payload is empty")
+	}
 
-	payload, err := maker.VerifyToken(token)
+	payload, err = maker.VerifyToken(token)
 	if !errors.Is(err, ErrExpiredToken) {
 		t.Fatalf("failed wrong type error want %s got %s", ErrExpiredToken, err)
 	}

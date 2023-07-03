@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"github.com/google/uuid"
 	"github.com/ismail118/simple-bank/models"
 )
 
@@ -27,6 +28,8 @@ type Repository interface {
 	DeleteUsers(ctx context.Context, username string) error
 	GetAccountByOwnerAndCurrency(ctx context.Context, owner, currency string) (models.Account, error)
 	GetUsersByEmail(ctx context.Context, email string) (models.Users, error)
+	InsertSessions(ctx context.Context, arg models.Sessions) error
+	GetSessionsByID(ctx context.Context, id uuid.UUID) (models.Sessions, error)
 }
 
 type DBTX interface {

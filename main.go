@@ -21,7 +21,7 @@ func main() {
 		log.Fatal("cannot connect db error:", err)
 	}
 
-	tokenMaker, err := token.NewJWTMaker(conf.TokenSymmetricKey)
+	tokenMaker, err := token.NewPasetoMaker(conf.TokenSymmetricKey)
 	if err != nil {
 		log.Fatal("cannot make token maker error:", err)
 	}

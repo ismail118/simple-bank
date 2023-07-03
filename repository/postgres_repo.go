@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"github.com/google/uuid"
 	"github.com/ismail118/simple-bank/models"
 	"log"
 	"time"
@@ -586,4 +587,59 @@ func (r *PostgresRepository) DeleteUsers(ctx context.Context, username string) e
 	}
 
 	return nil
+}
+
+func (r *PostgresRepository) InsertSessions(ctx context.Context, arg models.Sessions) error {
+	query := `
+	insert into sessions (id, username, refresh_token, user_agent, client_ip, is_blocked, expired_at, created_at) 
+	values ($1, $2, $3, $4, $5, $6, $7, $8) 
+`
+	_, err := r.db.ExecContext(ctx, query,
+		arg.ID,
+		arg.Username,
+		arg.RefreshToken,
+		arg.UserAgent,
+		arg.ClientIp,
+		false,
+		arg.ExpiredAt,
+		time.Now(),
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *PostgresRepository) GetSessionsByID(ctx context.Context, id uuid.UUID) (models.Sessions, error) {
+	query := `
+	select id, username, refresh_token, user_agent, client_ip, is_blocked, expired_at, created_at
+	from sessions
+	where id = $1
+`
+	var s models.Sessions
+	row := r.db.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&s.ID,
+		&s.Username,
+		&s.RefreshToken,
+		&s.UserAgent,
+		&s.ClientIp,
+		&s.IsBlocked,
+		&s.ExpiredAt,
+		&s.CreatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return s, nil
+		}
+		return s, err
+	}
+
+	err = row.Err()
+	if err != nil {
+		return s, err
+	}
+
+	return s, nil
 }
