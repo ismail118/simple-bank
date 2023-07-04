@@ -11,6 +11,7 @@ installation https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
 - UUID : https://github.com/google/uuid
 - JWT token : https://github.com/golang-jwt/jwt
 - PASETO token: https://github.com/o1egl/paseto
+- GRPC: https://github.com/grpc/grpc-go
 
 ### Development Tools
 - Github actions for ci Continuous Integration: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
@@ -18,3 +19,7 @@ installation https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
 Download and instalation: https://minikube.sigs.k8s.io/docs/start/
 Kubectl cli: https://kubernetes.io/docs/tasks/tools/#kubectl
 Ingress web service kubernates: https://kubernetes.io/docs/concepts/services-networking/ingress/
+- gRPC: https://grpc.io/docs/languages/go/quickstart/
+proto doc: https://protobuf.dev/programming-guides/proto3/
+- For call gRPC server tools: https://github.com/ktr0731/evans
+- Grpc gateway for auto http to grpc request: https://github.com/grpc-ecosystem/grpc-gateway

@@ -7,6 +7,17 @@ CREATE TABLE "users" (
   "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
 
+CREATE TABLE "sessions" (
+  "id" uuid PRIMARY KEY,
+  "username" varchar NOT NULL,
+  "refresh_token" varchar NOT NULL,
+  "user_agent" varchar NOT NULL,
+  "client_id" varchar NOT NULL,
+  "is_blocked" boolean NOT NULL DEFAULT 'false',
+  "expired_at" timestamptz NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT 'now()'
+);
+
 CREATE TABLE "accounts" (
   "id" BIGSERIAL PRIMARY KEY,
   "owner" varchar NOT NULL,
@@ -45,6 +56,8 @@ CREATE INDEX ON "transfers" ("from_account_id", "to_account_id");
 COMMENT ON COLUMN "entries"."amount" IS 'it can be negative or positive';
 
 COMMENT ON COLUMN "transfers"."amount" IS 'it must be positive';
+
+ALTER TABLE "sessions" ADD FOREIGN KEY ("username") REFERENCES "users" ("username");
 
 ALTER TABLE "accounts" ADD FOREIGN KEY ("owner") REFERENCES "users" ("username");
 
