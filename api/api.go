@@ -1,11 +1,13 @@
 package api
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ismail118/simple-bank/models"
+	"github.com/ismail118/simple-bank/repository"
 	"github.com/ismail118/simple-bank/token"
 	"github.com/ismail118/simple-bank/util"
 	"net/http"
@@ -610,7 +612,11 @@ func (s *Server) updateUsers(ctx *gin.Context) {
 	user.FullName = req.FullName
 	user.Email = req.Email
 
-	err = s.repo.UpdateUsers(ctx, user)
+	err = s.repo.UpdateUsers(ctx, repository.UpdateUserParam{
+		Username: user.Username,
+		FullName: sql.NullString{String: user.FullName, Valid: true},
+		Email:    sql.NullString{String: user.Email, Valid: true},
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

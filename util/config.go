@@ -8,6 +8,7 @@ import (
 type Config struct {
 	DbDriver             string        `mapstructure:"DB_DRIVER"`
 	DbSource             string        `mapstructure:"DB_SOURCE"`
+	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
 	HttpServerAddr       string        `mapstructure:"HTTP_SERVER_ADDR"`
 	GrpcServerAddr       string        `mapstructure:"GRPC_SERVER_ADDR"`
 	GatewayServerAddr    string        `mapstructure:"GATEWAY_SERVER_ADDR"`

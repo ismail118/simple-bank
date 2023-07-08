@@ -16,6 +16,11 @@ import (
 	"log"
 	"net"
 	"net/http"
+
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/source/github"
 )
 
 func main() {
@@ -23,6 +28,9 @@ func main() {
 	if err != nil {
 		log.Fatal("cannot load config error:", err)
 	}
+
+	// run db migration
+	runDBMigration(conf.MigrationURL, conf.DbSource)
 
 	conn, err := sql.Open(conf.DbDriver, conf.DbSource)
 	if err != nil {
@@ -45,6 +53,22 @@ func main() {
 	// run http server
 	runGinServer(store, repo, tokenMaker, conf)
 
+}
+
+func runDBMigration(migrationURL, dbSource string) {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		log.Fatalf("cannot create db migration err:%s", err)
+	}
+
+	err = migration.Up()
+	if err != nil {
+		if err != migrate.ErrNoChange {
+			log.Fatalf("cannot run migration up err:%s", err)
+		}
+	}
+
+	log.Println("success run db migration")
 }
 
 func runGrpcServer(store repository.Store, repo repository.Repository, tokenMaker token.Maker, conf util.Config) {

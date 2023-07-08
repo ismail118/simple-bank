@@ -24,7 +24,7 @@ type Repository interface {
 	InsertUsers(ctx context.Context, arg models.Users) error
 	GetUsersByUsername(ctx context.Context, username string) (models.Users, error)
 	GetListUsers(ctx context.Context, limit, offset int) ([]*models.Users, error)
-	UpdateUsers(ctx context.Context, arg models.Users) error
+	UpdateUsers(ctx context.Context, arg UpdateUserParam) error
 	DeleteUsers(ctx context.Context, username string) error
 	GetAccountByOwnerAndCurrency(ctx context.Context, owner, currency string) (models.Account, error)
 	GetUsersByEmail(ctx context.Context, email string) (models.Users, error)
