@@ -8,6 +8,7 @@ import (
 	"github.com/ismail118/simple-bank/repository"
 	"github.com/ismail118/simple-bank/token"
 	"github.com/ismail118/simple-bank/util"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -40,6 +41,11 @@ func NewGrpcServer(
 }
 
 func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+
+	violations := validateCreateUserRequest(req)
+	if violations != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%s:%s", violations[0].Field, violations[0].Description)
+	}
 
 	hashedPassword, err := util.HashedPassword(req.GetPassword())
 	if err != nil {
@@ -85,6 +91,11 @@ func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 
 func (s *GrpcServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 
+	violations := validateLoginRequest(req)
+	if violations != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%s:%s", violations[0].Field, violations[0].Description)
+	}
+
 	user, err := s.repo.GetUsersByUsername(ctx, req.Username)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "%s", err)
@@ -110,12 +121,14 @@ func (s *GrpcServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 		return nil, status.Errorf(codes.Internal, "%s", err)
 	}
 
+	mtdt := s.extractMetadata(ctx)
+
 	session := models.Sessions{
 		ID:           refreshPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
-		UserAgent:    "",
-		ClientIp:     "",
+		UserAgent:    mtdt.UserAgent,
+		ClientIp:     mtdt.ClientIP,
 		IsBlocked:    false,
 		ExpiredAt:    refreshPayload.ExpiredAt,
 	}
@@ -133,4 +146,44 @@ func (s *GrpcServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 		RefreshTokenExpiredAt: timestamppb.New(accessPayload.ExpiredAt),
 		User:                  util.ConvertUser(user),
 	}, nil
+}
+
+func validateCreateUserRequest(req *pb.CreateUserRequest) []*errdetails.BadRequest_FieldViolation {
+	var violation []*errdetails.BadRequest_FieldViolation
+	err := util.ValidateUsername(req.GetUsername())
+	if err != nil {
+		violation = append(violation, util.FieldViolation("username", err))
+	}
+
+	err = util.ValidatePassword(req.GetPassword())
+	if err != nil {
+		violation = append(violation, util.FieldViolation("password", err))
+	}
+
+	err = util.ValidateEmail(req.GetEmail())
+	if err != nil {
+		violation = append(violation, util.FieldViolation("email", err))
+	}
+
+	err = util.ValidateFullName(req.GetFullName())
+	if err != nil {
+		violation = append(violation, util.FieldViolation("full_name", err))
+	}
+
+	return violation
+}
+
+func validateLoginRequest(req *pb.LoginRequest) []*errdetails.BadRequest_FieldViolation {
+	var violation []*errdetails.BadRequest_FieldViolation
+	err := util.ValidateUsername(req.GetUsername())
+	if err != nil {
+		violation = append(violation, util.FieldViolation("username", err))
+	}
+
+	err = util.ValidatePassword(req.GetPassword())
+	if err != nil {
+		violation = append(violation, util.FieldViolation("password", err))
+	}
+
+	return violation
 }

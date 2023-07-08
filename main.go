@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"database/sql"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/ismail118/simple-bank/api"
 	pb "github.com/ismail118/simple-bank/proto"
 	"github.com/ismail118/simple-bank/repository"
@@ -10,8 +12,10 @@ import (
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/encoding/protojson"
 	"log"
 	"net"
+	"net/http"
 )
 
 func main() {
@@ -33,11 +37,13 @@ func main() {
 	repo := repository.NewPostgresRepo(conn)
 	store := repository.NewStore(conn)
 
-	// run http server
-	//runGinServer(store, repo, tokenMaker, conf)
-
 	// run grpc server
-	runGrpcServer(store, repo, tokenMaker, conf)
+	go runGrpcServer(store, repo, tokenMaker, conf)
+
+	go runGatewayServer(store, repo, tokenMaker, conf)
+
+	// run http server
+	runGinServer(store, repo, tokenMaker, conf)
 
 }
 
@@ -60,6 +66,44 @@ func runGrpcServer(store repository.Store, repo repository.Repository, tokenMake
 	err = grpcServer.Serve(listener)
 	if err != nil {
 		log.Fatalf("cannot start grp server error:%s", err)
+	}
+}
+
+func runGatewayServer(store repository.Store, repo repository.Repository, tokenMaker token.Maker, conf util.Config) {
+	server := api.NewGrpcServer(store, repo, tokenMaker, &conf)
+
+	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+		MarshalOptions: protojson.MarshalOptions{
+			UseProtoNames: true,
+		},
+		UnmarshalOptions: protojson.UnmarshalOptions{
+			DiscardUnknown: true,
+		},
+	})
+
+	grpcMux := runtime.NewServeMux(jsonOption)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := pb.RegisterSimpleBankHandlerServer(ctx, grpcMux, server)
+	if err != nil {
+		log.Fatalf("cannot register handler server err:%s", err)
+	}
+
+	// reroute http mux to grpcMux
+	mux := http.NewServeMux()
+	mux.Handle("/", grpcMux)
+
+	listener, err := net.Listen("tcp", conf.GatewayServerAddr)
+	if err != nil {
+		log.Fatalf("error listen gateway addr:%s", conf.GrpcServerAddr)
+	}
+
+	log.Println("start http gateway server at ", listener.Addr().String())
+	err = http.Serve(listener, mux)
+	if err != nil {
+		log.Fatalf("cannot start http gateway server error:%s", err)
 	}
 }
 
