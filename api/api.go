@@ -596,7 +596,7 @@ func (s *Server) updateUsers(ctx *gin.Context) {
 			return
 		}
 		if u.Username != "" {
-			ctx.JSON(http.StatusNotFound, fmt.Sprintf("email %s already being userd", req.Email))
+			ctx.JSON(http.StatusForbidden, fmt.Sprintf("email %s already being userd", req.Email))
 			return
 		}
 	}

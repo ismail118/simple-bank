@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/ismail118/simple-bank/models"
 	pb "github.com/ismail118/simple-bank/proto"
@@ -85,6 +86,49 @@ func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 	}
 
 	return &pb.CreateUserResponse{
+		User: util.ConvertUser(user),
+	}, nil
+}
+
+func (s *GrpcServer) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+
+	violations := validateUpdateUserRequest(req)
+	if violations != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%s:%s", violations[0].Field, violations[0].Description)
+	}
+
+	user, err := s.repo.GetUsersByUsername(ctx, req.GetUsername())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "err:%s", err)
+	}
+	if user.Username == "" {
+		return nil, status.Error(codes.NotFound, "username not found")
+	}
+
+	if user.Email != req.GetEmail() {
+		u, err := s.repo.GetUsersByEmail(ctx, req.GetEmail())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "err:%s", err)
+		}
+		if u.Username != "" {
+			return nil, status.Errorf(codes.InvalidArgument, "email %s already being used", req.GetEmail())
+		}
+	}
+
+	// updated
+	user.FullName = req.GetFullName()
+	user.Email = req.GetEmail()
+
+	err = s.repo.UpdateUsers(ctx, repository.UpdateUserParam{
+		Username: user.Username,
+		FullName: sql.NullString{String: user.FullName, Valid: true},
+		Email:    sql.NullString{String: user.Email, Valid: true},
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "err:%s", err)
+	}
+
+	return &pb.UpdateUserResponse{
 		User: util.ConvertUser(user),
 	}, nil
 }
@@ -183,6 +227,31 @@ func validateLoginRequest(req *pb.LoginRequest) []*errdetails.BadRequest_FieldVi
 	err = util.ValidatePassword(req.GetPassword())
 	if err != nil {
 		violation = append(violation, util.FieldViolation("password", err))
+	}
+
+	return violation
+}
+
+func validateUpdateUserRequest(req *pb.UpdateUserRequest) []*errdetails.BadRequest_FieldViolation {
+	var violation []*errdetails.BadRequest_FieldViolation
+	err := util.ValidateUsername(req.GetUsername())
+	if err != nil {
+		violation = append(violation, util.FieldViolation("username", err))
+	}
+
+	//err = util.ValidatePassword(req.GetPassword())
+	//if err != nil {
+	//	violation = append(violation, util.FieldViolation("password", err))
+	//}
+
+	err = util.ValidateEmail(req.GetEmail())
+	if err != nil {
+		violation = append(violation, util.FieldViolation("email", err))
+	}
+
+	err = util.ValidateFullName(req.GetFullName())
+	if err != nil {
+		violation = append(violation, util.FieldViolation("full_name", err))
 	}
 
 	return violation
