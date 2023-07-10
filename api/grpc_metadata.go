@@ -4,7 +4,6 @@ import (
 	"context"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
-	"log"
 )
 
 const (
@@ -23,7 +22,6 @@ func (s *GrpcServer) extractMetadata(ctx context.Context) *Metadata {
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
-		log.Println("md:", md)
 		if len(md.Get(grpcGatewayUserAgentHeader)) > 0 {
 			mtdt.UserAgent = md.Get(grpcGatewayUserAgentHeader)[0]
 		}

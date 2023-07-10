@@ -13,6 +13,7 @@ https://github.com/golang-migrate/migrate
 - JWT token : https://github.com/golang-jwt/jwt
 - PASETO token: https://github.com/o1egl/paseto
 - GRPC: https://github.com/grpc/grpc-go
+- Log JSON format: https://github.com/rs/zerolog
 
 ### Development Tools
 - Github actions for ci Continuous Integration: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions

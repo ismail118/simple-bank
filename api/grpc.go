@@ -92,6 +92,12 @@ func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 
 func (s *GrpcServer) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
 
+	// authorization
+	authPayload, err := s.authorization(ctx)
+	if err != nil {
+		return nil, util.UnauthenticatedError(err)
+	}
+
 	violations := validateUpdateUserRequest(req)
 	if violations != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%s:%s", violations[0].Field, violations[0].Description)
@@ -103,6 +109,11 @@ func (s *GrpcServer) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 	}
 	if user.Username == "" {
 		return nil, status.Error(codes.NotFound, "username not found")
+	}
+
+	// authorization
+	if authPayload.Username != user.Username {
+		return nil, status.Errorf(codes.PermissionDenied, "user doesn't belong to user login")
 	}
 
 	if user.Email != req.GetEmail() {

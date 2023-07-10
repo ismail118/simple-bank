@@ -10,10 +10,10 @@ import (
 	"github.com/ismail118/simple-bank/token"
 	"github.com/ismail118/simple-bank/util"
 	_ "github.com/lib/pq"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
-	"log"
 	"net"
 	"net/http"
 
@@ -26,7 +26,7 @@ import (
 func main() {
 	conf, err := util.LoadConfig(".")
 	if err != nil {
-		log.Fatal("cannot load config error:", err)
+		log.Fatal().Msgf("cannot load config error:%s", err)
 	}
 
 	// run db migration
@@ -34,12 +34,12 @@ func main() {
 
 	conn, err := sql.Open(conf.DbDriver, conf.DbSource)
 	if err != nil {
-		log.Fatal("cannot connect db error:", err)
+		log.Fatal().Msgf("cannot connect db error:%s", err)
 	}
 
 	tokenMaker, err := token.NewPasetoMaker(conf.TokenSymmetricKey)
 	if err != nil {
-		log.Fatal("cannot make token maker error:", err)
+		log.Fatal().Msgf("cannot make token maker error:%s", err)
 	}
 
 	repo := repository.NewPostgresRepo(conn)
@@ -58,23 +58,26 @@ func main() {
 func runDBMigration(migrationURL, dbSource string) {
 	migration, err := migrate.New(migrationURL, dbSource)
 	if err != nil {
-		log.Fatalf("cannot create db migration err:%s", err)
+		log.Fatal().Msgf("cannot create db migration err:%s", err)
 	}
 
 	err = migration.Up()
 	if err != nil {
 		if err != migrate.ErrNoChange {
-			log.Fatalf("cannot run migration up err:%s", err)
+			log.Fatal().Msgf("cannot run migration up err:%s", err)
 		}
 	}
 
-	log.Println("success run db migration")
+	log.Info().Msg("success run db migration")
 }
 
 func runGrpcServer(store repository.Store, repo repository.Repository, tokenMaker token.Maker, conf util.Config) {
 	server := api.NewGrpcServer(store, repo, tokenMaker, &conf)
 
-	grpcServer := grpc.NewServer()
+	// middleware/interceptor logger
+	grpcInterceptor := grpc.UnaryInterceptor(api.GrpcInterceptorLogger)
+
+	grpcServer := grpc.NewServer(grpcInterceptor)
 	pb.RegisterSimpleBankServer(grpcServer, server)
 
 	// reflection.Register(grpcServer) is optional but recommended
@@ -83,13 +86,13 @@ func runGrpcServer(store repository.Store, repo repository.Repository, tokenMake
 
 	listener, err := net.Listen("tcp", conf.GrpcServerAddr)
 	if err != nil {
-		log.Fatalf("error listen grpc addr:%s", conf.GrpcServerAddr)
+		log.Fatal().Msgf("error listen grpc addr:%s", conf.GrpcServerAddr)
 	}
 
-	log.Println("start gRPC server at ", listener.Addr().String())
+	log.Info().Msgf("start gRPC server at %s", listener.Addr().String())
 	err = grpcServer.Serve(listener)
 	if err != nil {
-		log.Fatalf("cannot start grp server error:%s", err)
+		log.Fatal().Msgf("cannot start grp server error:%s", err)
 	}
 }
 
@@ -112,7 +115,7 @@ func runGatewayServer(store repository.Store, repo repository.Repository, tokenM
 
 	err := pb.RegisterSimpleBankHandlerServer(ctx, grpcMux, server)
 	if err != nil {
-		log.Fatalf("cannot register handler server err:%s", err)
+		log.Fatal().Msgf("cannot register handler server err:%s", err)
 	}
 
 	// reroute http mux to grpcMux
@@ -121,13 +124,14 @@ func runGatewayServer(store repository.Store, repo repository.Repository, tokenM
 
 	listener, err := net.Listen("tcp", conf.GatewayServerAddr)
 	if err != nil {
-		log.Fatalf("error listen gateway addr:%s", conf.GrpcServerAddr)
+		log.Fatal().Msgf("error listen gateway addr:%s", conf.GrpcServerAddr)
 	}
 
-	log.Println("start http gateway server at ", listener.Addr().String())
-	err = http.Serve(listener, mux)
+	log.Info().Msgf("start http gateway server at %s", listener.Addr().String())
+	handler := api.HttpGatewayInterceptorLogger(mux)
+	err = http.Serve(listener, handler)
 	if err != nil {
-		log.Fatalf("cannot start http gateway server error:%s", err)
+		log.Fatal().Msgf("cannot start http gateway server error:%s", err)
 	}
 }
 
@@ -136,6 +140,6 @@ func runGinServer(store repository.Store, repo repository.Repository, tokenMaker
 
 	err := srv.Start(conf.HttpServerAddr)
 	if err != nil {
-		log.Fatal("cannot start server error:", err)
+		log.Fatal().Msgf("cannot start server error:%s", err)
 	}
 }
