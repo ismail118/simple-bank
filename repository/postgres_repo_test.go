@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"github.com/ismail118/simple-bank/models"
 	"github.com/ismail118/simple-bank/util"
 	"testing"
@@ -838,7 +839,13 @@ func TestUpdateUsers(t *testing.T) {
 	// update
 	dataTest.FullName = util.RandomOwner()
 
-	err = testRepo.UpdateUsers(context.Background(), dataTest)
+	err = testRepo.UpdateUsers(context.Background(), UpdateUserParam{
+		Username: dataTest.Username,
+		FullName: sql.NullString{
+			String: dataTest.FullName,
+			Valid:  true,
+		},
+	})
 	if err != nil {
 		t.Errorf("failed update users balance error:%s", err)
 	}

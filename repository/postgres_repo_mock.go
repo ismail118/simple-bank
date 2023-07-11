@@ -201,7 +201,7 @@ func (r *PostgresRepositoryMock) GetListUsers(ctx context.Context, limit, offset
 	return items, nil
 }
 
-func (r *PostgresRepositoryMock) UpdateUsers(ctx context.Context, arg models.Users) error {
+func (r *PostgresRepositoryMock) UpdateUsers(ctx context.Context, arg UpdateUserParam) error {
 	if arg.Username == "error" {
 		return sql.ErrConnDone
 	}

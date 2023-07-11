@@ -23,6 +23,5 @@ services:
       "/app/wait-for",
       "postgres-service:5432",
       "--",
-#      "/app/start.sh"
     ]
     command: [ "/app/simplebank" ]

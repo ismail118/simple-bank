@@ -55,3 +55,23 @@ compose_up_build:
 
 minikube_tunnel:
 	minikube tunnel
+
+generate_proto:
+	protoc --go_out=. --go_opt=paths=source_relative \
+        --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+        proto/service_simple_bank.proto
+
+generate_gateway:
+	protoc -I . --grpc-gateway_out=. \
+        --grpc-gateway_opt=paths=source_relative \
+        proto/service_simple_bank.proto
+
+generate_proto_gateway:
+	protoc -I . --go_out=. --go_opt=paths=source_relative \
+            --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+            --grpc-gateway_out=. \
+            --grpc-gateway_opt=paths=source_relative \
+            proto/service_simple_bank.proto
+
+evans:
+	evans --host localhost --port 9090 -r repl

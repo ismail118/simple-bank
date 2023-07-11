@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/ismail118/simple-bank/pb";
+
+import "google/api/annotations.proto";
+
+
+message User {
+  string username = 1;
+  string full_name = 2;
+  string email = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message CreateUserRequest {
+  string username = 1;
+  string full_name = 2;
+  string email = 3;
+  string password = 4;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+message UpdateUserRequest {
+  string username = 1;
+  optional string full_name = 2;
+  optional string email = 3;
+  optional string password = 4;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string session_id = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  google.protobuf.Timestamp access_token_expired_at = 4;
+  google.protobuf.Timestamp refresh_token_expired_at = 5;
+  User user = 6;
+}
+
+service SimpleBank {
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+        post: "/v1/create_user"
+        body: "*"
+    };
+  }
+  rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/update_user"
+      body: "*"
+    };
+  }
+  rpc Login (LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/login"
+      body: "*"
+    };
+  }
+}

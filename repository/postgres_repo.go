@@ -559,12 +559,25 @@ func (r *PostgresRepository) GetListUsers(ctx context.Context, limit, offset int
 	return items, nil
 }
 
-func (r *PostgresRepository) UpdateUsers(ctx context.Context, arg models.Users) error {
+type UpdateUserParam struct {
+	Username       string         `json:"username"`
+	HashedPassword sql.NullString `json:"hashed_password"`
+	FullName       sql.NullString `json:"full_name"`
+	Email          sql.NullString `json:"email"`
+}
+
+func (r *PostgresRepository) UpdateUsers(ctx context.Context, arg UpdateUserParam) error {
 	query := `
-	update users set full_name = $1, email = $2, updated_at = $3
-	where username = $4
+	update users 
+	set 
+	    hashed_password = COALESCE($1, hashed_password),
+	    full_name = COALESCE($2, full_name),
+	    email = COALESCE($3, email),
+	    updated_at = $4
+	where username = $5
 `
 	_, err := r.db.ExecContext(ctx, query,
+		arg.HashedPassword,
 		arg.FullName,
 		arg.Email,
 		time.Now(),

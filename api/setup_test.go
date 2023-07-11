@@ -5,7 +5,7 @@ import (
 	"github.com/ismail118/simple-bank/repository"
 	"github.com/ismail118/simple-bank/token"
 	"github.com/ismail118/simple-bank/util"
-	"log"
+	"github.com/rs/zerolog/log"
 	"os"
 	"testing"
 	"time"
@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
-		log.Fatal("failed setup NewPasetoMaker error:", err)
+		log.Fatal().Msgf("failed setup NewPasetoMaker error: %s", err)
 	}
 
 	serverTest = NewServer(storeMock, repoMock, tokenMaker, &config)
