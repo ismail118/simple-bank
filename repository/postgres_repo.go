@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/ismail118/simple-bank/models"
 	"log"
@@ -465,7 +466,7 @@ func (r *PostgresRepository) InsertUsers(ctx context.Context, arg models.Users) 
 
 func (r *PostgresRepository) GetUsersByUsername(ctx context.Context, username string) (models.Users, error) {
 	query := `
-	select username, hashed_password, full_name, email, created_at, updated_at from users
+	select username, hashed_password, full_name, email, created_at, updated_at, is_email_verify from users
 	where username = $1
 `
 	var a models.Users
@@ -477,6 +478,7 @@ func (r *PostgresRepository) GetUsersByUsername(ctx context.Context, username st
 		&a.Email,
 		&a.CreatedAt,
 		&a.UpdatedAt,
+		&a.IsEmailVerify,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -496,7 +498,7 @@ func (r *PostgresRepository) GetUsersByUsername(ctx context.Context, username st
 
 func (r *PostgresRepository) GetUsersByEmail(ctx context.Context, email string) (models.Users, error) {
 	query := `
-	select username, hashed_password, full_name, email, created_at, updated_at from users
+	select username, hashed_password, full_name, email, created_at, updated_at, is_email_verify from users
 	where email = $1
 `
 	var a models.Users
@@ -508,6 +510,7 @@ func (r *PostgresRepository) GetUsersByEmail(ctx context.Context, email string) 
 		&a.Email,
 		&a.CreatedAt,
 		&a.UpdatedAt,
+		&a.IsEmailVerify,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -527,7 +530,7 @@ func (r *PostgresRepository) GetUsersByEmail(ctx context.Context, email string) 
 
 func (r *PostgresRepository) GetListUsers(ctx context.Context, limit, offset int) ([]*models.Users, error) {
 	query := `
-	select username, hashed_password, full_name, email, created_at, updated_at from users limit $1 offset $2
+	select username, hashed_password, full_name, email, created_at, updated_at, is_email_verify from users limit $1 offset $2
 `
 	var items []*models.Users
 	rows, err := r.db.QueryContext(ctx, query, limit, offset)
@@ -544,6 +547,7 @@ func (r *PostgresRepository) GetListUsers(ctx context.Context, limit, offset int
 			&a.Email,
 			&a.CreatedAt,
 			&a.UpdatedAt,
+			&a.IsEmailVerify,
 		)
 		if err != nil {
 			return items, err
@@ -560,10 +564,11 @@ func (r *PostgresRepository) GetListUsers(ctx context.Context, limit, offset int
 }
 
 type UpdateUserParam struct {
-	Username       string         `json:"username"`
-	HashedPassword sql.NullString `json:"hashed_password"`
-	FullName       sql.NullString `json:"full_name"`
-	Email          sql.NullString `json:"email"`
+	Username        string         `json:"username"`
+	HashedPassword  sql.NullString `json:"hashed_password"`
+	FullName        sql.NullString `json:"full_name"`
+	Email           sql.NullString `json:"email"`
+	IsEmailVerified sql.NullBool   `json:"is_email_verified"`
 }
 
 func (r *PostgresRepository) UpdateUsers(ctx context.Context, arg UpdateUserParam) error {
@@ -573,13 +578,15 @@ func (r *PostgresRepository) UpdateUsers(ctx context.Context, arg UpdateUserPara
 	    hashed_password = COALESCE($1, hashed_password),
 	    full_name = COALESCE($2, full_name),
 	    email = COALESCE($3, email),
-	    updated_at = $4
-	where username = $5
+	    is_email_verify = COALESCE($4, is_email_verify),
+	    updated_at = $5
+	where username = $6
 `
 	_, err := r.db.ExecContext(ctx, query,
 		arg.HashedPassword,
 		arg.FullName,
 		arg.Email,
+		arg.IsEmailVerified,
 		time.Now(),
 		arg.Username,
 	)
@@ -655,4 +662,90 @@ func (r *PostgresRepository) GetSessionsByID(ctx context.Context, id uuid.UUID) 
 	}
 
 	return s, nil
+}
+
+func (r *PostgresRepository) InsertVerifyEmail(ctx context.Context, arg models.VerifyEmail) (int64, error) {
+	query := `
+	insert into verify_email (username, email, secret_code, is_used, created_at, expired_at)
+	values ($1, $2, $3, $4, $5, $6)
+	returning id
+`
+	var id int64
+	row := r.db.QueryRowContext(ctx, query,
+		arg.Username,
+		arg.Email,
+		arg.SecretCode,
+		false,
+		time.Now(),
+		time.Now().Add(15*time.Minute),
+	)
+
+	err := row.Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+
+	err = row.Err()
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (r *PostgresRepository) GetVerifyEmailByID(ctx context.Context, id int64) (models.VerifyEmail, error) {
+	query := `
+	select id, username, email, secret_code, is_used, created_at, expired_at
+	from verify_email
+	where id = $1
+`
+	var a models.VerifyEmail
+	row := r.db.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&a.ID,
+		&a.Username,
+		&a.Email,
+		&a.SecretCode,
+		&a.IsUsed,
+		&a.CreatedAt,
+		&a.ExpiredAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return a, nil
+		}
+		return a, err
+	}
+
+	err = row.Err()
+	if err != nil {
+		return a, err
+	}
+
+	return a, nil
+}
+
+// UpdateVerifyEmailIsUsed update table verify_email field is_used to true, return error if nothing row effected
+func (r *PostgresRepository) UpdateVerifyEmailIsUsed(ctx context.Context, id int64, secretCode string) error {
+	query := `
+	update verify_email set is_used = true
+	where id = $1
+	  AND secret_code = $2
+	  AND is_used = false
+	  AND expired_at > now()
+`
+	res, err := r.db.ExecContext(ctx, query, id, secretCode)
+	if err != nil {
+		return err
+	}
+
+	effected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if effected == 0 {
+		return fmt.Errorf("nothing row effected")
+	}
+	return nil
 }

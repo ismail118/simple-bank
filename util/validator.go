@@ -63,3 +63,20 @@ func ValidateFullName(s string) error {
 
 	return nil
 }
+
+func ValidateID(value int64) error {
+	if value <= 0 {
+		return fmt.Errorf("must be a positive number")
+	}
+
+	return nil
+}
+
+func ValidateSecretCode(value string) error {
+	err := ValidateString(value, 32, 128)
+	if err != nil {
+		return fmt.Errorf("invalid secret code")
+	}
+
+	return nil
+}

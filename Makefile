@@ -14,6 +14,9 @@ drop_db:
 	echo "drop database"
 	docker exec -it postgres-db-1 dropdb --username=postgres simple_bank
 
+migrate_new:
+	migrate create -ext sql -dir db/migration -seq $(name)
+
 migrate_up:
 	echo "up migration"
 	# -database "driver://user:password@host:port/db_name?sslmode=disable"
@@ -75,3 +78,9 @@ generate_proto_gateway:
 
 evans:
 	evans --host localhost --port 9090 -r repl
+
+redis:
+	docker run --name redis -p 6379:6379 -d redis:7.0.12-alpine
+
+coverage:
+	go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out

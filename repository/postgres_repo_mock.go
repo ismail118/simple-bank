@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"github.com/google/uuid"
 	"github.com/ismail118/simple-bank/models"
+	"github.com/ismail118/simple-bank/util"
 	"time"
 )
 
@@ -164,15 +165,16 @@ func (r *PostgresRepositoryMock) InsertUsers(ctx context.Context, arg models.Use
 }
 
 func (r *PostgresRepositoryMock) GetUsersByUsername(ctx context.Context, username string) (models.Users, error) {
+	hashedPassword, _ := util.HashedPassword("some password")
 	var a models.Users = models.Users{
 		Username:       username,
-		HashedPassword: "some password",
+		HashedPassword: hashedPassword,
 		FullName:       "some name",
 		Email:          "some@email.com",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	if username == "user" {
+	if username == "user" || username == "user2" {
 		a = models.Users{}
 	}
 	return a, nil
@@ -220,4 +222,18 @@ func (r *PostgresRepositoryMock) GetSessionsByID(ctx context.Context, id uuid.UU
 	var s models.Sessions
 
 	return s, nil
+}
+
+func (r *PostgresRepositoryMock) InsertVerifyEmail(ctx context.Context, arg models.VerifyEmail) (int64, error) {
+	var id int64
+	return id, nil
+}
+
+func (r *PostgresRepositoryMock) GetVerifyEmailByID(ctx context.Context, id int64) (models.VerifyEmail, error) {
+	var a models.VerifyEmail
+	return a, nil
+}
+
+func (r *PostgresRepositoryMock) UpdateVerifyEmailIsUsed(ctx context.Context, id int64, secretCode string) error {
+	return nil
 }
