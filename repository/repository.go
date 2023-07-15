@@ -2,9 +2,10 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"github.com/google/uuid"
 	"github.com/ismail118/simple-bank/models"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type Repository interface {
@@ -36,8 +37,7 @@ type Repository interface {
 }
 
 type DBTX interface {
-	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
-	PrepareContext(context.Context, string) (*sql.Stmt, error)
-	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
-	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }

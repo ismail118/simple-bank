@@ -2,9 +2,9 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"github.com/ismail118/simple-bank/models"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Store interface {
@@ -17,18 +17,18 @@ type Store interface {
 
 type SQLStore struct {
 	Repository
-	db *sql.DB
+	dbpool *pgxpool.Pool
 }
 
-func NewStore(db *sql.DB) Store {
+func NewStore(dbpool *pgxpool.Pool) Store {
 	return &SQLStore{
-		db:         db,
-		Repository: NewPostgresRepo(db),
+		dbpool:     dbpool,
+		Repository: NewPostgresRepo(dbpool),
 	}
 }
 
 func (s *SQLStore) execTx(ctx context.Context, fn func(Repository) error) error {
-	tx, err := s.db.BeginTx(ctx, nil)
+	tx, err := s.dbpool.Begin(ctx)
 	if err != nil {
 		return err
 	}
@@ -36,11 +36,11 @@ func (s *SQLStore) execTx(ctx context.Context, fn func(Repository) error) error 
 	repo := NewPostgresRepo(tx)
 	err = fn(repo)
 	if err != nil {
-		rbErr := tx.Rollback()
+		rbErr := tx.Rollback(ctx)
 		if rbErr != nil {
 			return fmt.Errorf("tx error:%s rollback error: %s", err, rbErr)
 		}
 	}
 
-	return tx.Commit()
+	return tx.Commit(ctx)
 }

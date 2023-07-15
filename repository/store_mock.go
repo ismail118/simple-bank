@@ -2,21 +2,21 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"github.com/ismail118/simple-bank/models"
 	"github.com/ismail118/simple-bank/util"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
 )
 
 type SQLStoreMock struct {
 	Repository
-	db *sql.DB
+	dbpool *pgxpool.Pool
 }
 
-func NewStoreMock(db *sql.DB) Store {
+func NewStoreMock(dbpool *pgxpool.Pool) Store {
 	return &SQLStoreMock{
-		db:         db,
-		Repository: NewPostgresRepo(db),
+		dbpool:     dbpool,
+		Repository: NewPostgresRepo(dbpool),
 	}
 }
 

@@ -12,8 +12,8 @@ type CreateUserTxResult struct {
 func (s *SQLStore) CreateUserTx(ctx context.Context, arg models.Users, afterCreate func(user models.Users) error) (CreateUserTxResult, error) {
 	var result CreateUserTxResult
 
-	err := s.execTx(ctx, func(r Repository) error {
-		err := r.InsertUsers(ctx, arg)
+	err := s.execTx(ctx, func(repo Repository) error {
+		err := repo.InsertUsers(ctx, arg)
 		if err != nil {
 			return err
 		}

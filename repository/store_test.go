@@ -244,6 +244,7 @@ func TestTransferTxDeadlock(t *testing.T) {
 	chErr := make(chan error)
 	chRes := make(chan TransferTxResult)
 
+	log.Println("begin all transfers")
 	for i := 0; i < n; i++ {
 		fromAccountID := acc1.ID
 		toAccountID := acc2.ID

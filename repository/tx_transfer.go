@@ -16,8 +16,8 @@ type TransferTxResult struct {
 func (s *SQLStore) TransferTx(ctx context.Context, arg models.Transfer) (TransferTxResult, error) {
 	var result TransferTxResult
 
-	err := s.execTx(ctx, func(r Repository) error {
-		newID, err := s.InsertTransfer(ctx, arg)
+	err := s.execTx(ctx, func(repo Repository) error {
+		newID, err := repo.InsertTransfer(ctx, arg)
 		if err != nil {
 			return err
 		}
@@ -29,7 +29,7 @@ func (s *SQLStore) TransferTx(ctx context.Context, arg models.Transfer) (Transfe
 			AccountID: arg.FromAccountID,
 			Amount:    -arg.Amount,
 		}
-		newID, err = s.InsertEntry(ctx, fEntry)
+		newID, err = repo.InsertEntry(ctx, fEntry)
 		if err != nil {
 			return err
 		}
@@ -41,7 +41,7 @@ func (s *SQLStore) TransferTx(ctx context.Context, arg models.Transfer) (Transfe
 			AccountID: arg.ToAccountID,
 			Amount:    arg.Amount,
 		}
-		newID, err = s.InsertEntry(ctx, tEntry)
+		newID, err = repo.InsertEntry(ctx, tEntry)
 		if err != nil {
 			return err
 		}
@@ -50,20 +50,20 @@ func (s *SQLStore) TransferTx(ctx context.Context, arg models.Transfer) (Transfe
 		result.ToEntry = tEntry
 
 		if arg.FromAccountID < arg.ToAccountID {
-			result.FromAccount, err = s.AddAccountBalanceByID(context.Background(), -arg.Amount, arg.FromAccountID)
+			result.FromAccount, err = repo.AddAccountBalanceByID(context.Background(), -arg.Amount, arg.FromAccountID)
 			if err != nil {
 				return err
 			}
-			result.ToAccount, err = s.AddAccountBalanceByID(context.Background(), arg.Amount, arg.ToAccountID)
+			result.ToAccount, err = repo.AddAccountBalanceByID(context.Background(), arg.Amount, arg.ToAccountID)
 			if err != nil {
 				return err
 			}
 		} else {
-			result.ToAccount, err = s.AddAccountBalanceByID(context.Background(), arg.Amount, arg.ToAccountID)
+			result.ToAccount, err = repo.AddAccountBalanceByID(context.Background(), arg.Amount, arg.ToAccountID)
 			if err != nil {
 				return err
 			}
-			result.FromAccount, err = s.AddAccountBalanceByID(context.Background(), -arg.Amount, arg.FromAccountID)
+			result.FromAccount, err = repo.AddAccountBalanceByID(context.Background(), -arg.Amount, arg.FromAccountID)
 			if err != nil {
 				return err
 			}

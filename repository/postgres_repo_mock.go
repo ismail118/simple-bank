@@ -6,22 +6,23 @@ import (
 	"github.com/google/uuid"
 	"github.com/ismail118/simple-bank/models"
 	"github.com/ismail118/simple-bank/util"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
 )
 
 type PostgresRepositoryMock struct {
-	db DBTX
+	dbpool DBTX
 }
 
-func NewPostgresRepoMock(db DBTX) Repository {
+func NewPostgresRepoMock(dbpool DBTX) Repository {
 	return &PostgresRepositoryMock{
-		db: db,
+		dbpool: dbpool,
 	}
 }
 
-func (r *PostgresRepositoryMock) WithTx(tx *sql.Tx) Repository {
+func (r *PostgresRepositoryMock) WithTx(dbpool *pgxpool.Pool) Repository {
 	return &PostgresRepositoryMock{
-		db: tx,
+		dbpool: dbpool,
 	}
 }
 

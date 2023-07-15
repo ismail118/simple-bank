@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
-	"database/sql"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/source/github"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hibiken/asynq"
 	"github.com/ismail118/simple-bank/api"
@@ -12,18 +15,13 @@ import (
 	"github.com/ismail118/simple-bank/token"
 	"github.com/ismail118/simple-bank/util"
 	"github.com/ismail118/simple-bank/worker"
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
 	"net"
 	"net/http"
-
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/golang-migrate/migrate/v4/source/github"
 )
 
 func main() {
@@ -35,10 +33,12 @@ func main() {
 	// run db migration
 	runDBMigration(conf.MigrationURL, conf.DbSource)
 
-	conn, err := sql.Open(conf.DbDriver, conf.DbSource)
+	// create database pool connection
+	dbpool, err := pgxpool.New(context.Background(), conf.DbSource)
 	if err != nil {
-		log.Fatal().Msgf("cannot connect db error:%s", err)
+		log.Fatal().Err(err).Msgf("Unable to create connection pool: %v\n", err)
 	}
+	defer dbpool.Close()
 
 	tokenMaker, err := token.NewPasetoMaker(conf.TokenSymmetricKey)
 	if err != nil {
@@ -52,8 +52,8 @@ func main() {
 
 	mailer := mail.NewGmailSender(conf.EmailSenderName, conf.EmailSenderAddress, conf.EmailSenderPassword)
 
-	repo := repository.NewPostgresRepo(conn)
-	store := repository.NewStore(conn)
+	repo := repository.NewPostgresRepo(dbpool)
+	store := repository.NewStore(dbpool)
 
 	// run task processor
 	go runTaskProcessor(redisOpt, store, mailer, conf.GatewayServerAddr)

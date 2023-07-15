@@ -14,19 +14,19 @@ type VerifyEmailTxResult struct {
 func (s *SQLStore) VerifyEmailTx(ctx context.Context, id int64, secretCode string) (VerifyEmailTxResult, error) {
 	var result VerifyEmailTxResult
 
-	err := s.execTx(ctx, func(r Repository) error {
-		err := s.UpdateVerifyEmailIsUsed(ctx, id, secretCode)
+	err := s.execTx(ctx, func(repo Repository) error {
+		err := repo.UpdateVerifyEmailIsUsed(ctx, id, secretCode)
 		if err != nil {
 			return err
 		}
 
-		verifyEmail, err := s.GetVerifyEmailByID(ctx, id)
+		verifyEmail, err := repo.GetVerifyEmailByID(ctx, id)
 		if err != nil {
 			return err
 		}
 		result.VerifyEmail = verifyEmail
 
-		err = s.UpdateUsers(ctx, UpdateUserParam{
+		err = repo.UpdateUsers(ctx, UpdateUserParam{
 			Username: verifyEmail.Username,
 			IsEmailVerified: sql.NullBool{
 				Bool:  true,
@@ -37,7 +37,7 @@ func (s *SQLStore) VerifyEmailTx(ctx context.Context, id int64, secretCode strin
 			return err
 		}
 
-		result.User, err = s.GetUsersByUsername(ctx, verifyEmail.Username)
+		result.User, err = repo.GetUsersByUsername(ctx, verifyEmail.Username)
 		if err != nil {
 			return err
 		}

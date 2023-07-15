@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"database/sql"
+	"context"
 	"github.com/ismail118/simple-bank/util"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -22,15 +23,16 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal().Err(err)
 	}
-	conn, err := sql.Open(conf.DbDriver, conf.DbSource)
+	dbpool, err := pgxpool.New(context.Background(), conf.DbSource)
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(err).Msgf("Unable to create connection pool: %v\n", err)
 	}
+	defer dbpool.Close()
 
-	repo := NewPostgresRepo(conn)
+	repo := NewPostgresRepo(dbpool)
 	testRepo = repo
 
-	store := NewStore(conn)
+	store := NewStore(dbpool)
 	testStore = store
 
 	os.Exit(m.Run())

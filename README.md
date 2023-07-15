@@ -6,7 +6,8 @@ backend master class
 https://github.com/golang-migrate/migrate
   - installation golang-migrate cli https://github.com/golang-migrate/migrate/tree/master/cmd/migrate (update to migrate from golang code).
   - migrate using golang code https://pkg.go.dev/github.com/golang-migrate/migrate/v4#readme-use-in-your-go-project
-- Postgres Database driver: https://github.com/lib/pq
+- Postgres Database driver: https://github.com/jackc/pgx
+  - example database pool connection using px: https://github.com/jackc/pgx/wiki/Getting-started-with-pgx 
 - Framework gin: https://github.com/gin-gonic/gin
 - Viper for load config app: https://github.com/spf13/viper
 - UUID : https://github.com/google/uuid

@@ -5,24 +5,26 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/ismail118/simple-bank/errors"
 	"github.com/ismail118/simple-bank/models"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"time"
 )
 
 type PostgresRepository struct {
-	db DBTX
+	dbpool DBTX
 }
 
-func NewPostgresRepo(db DBTX) Repository {
+func NewPostgresRepo(dbpool DBTX) Repository {
 	return &PostgresRepository{
-		db: db,
+		dbpool: dbpool,
 	}
 }
 
-func (r *PostgresRepository) WithTx(tx *sql.Tx) Repository {
+func (r *PostgresRepository) WithTx(dbpool *pgxpool.Pool) Repository {
 	return &PostgresRepository{
-		db: tx,
+		dbpool: dbpool,
 	}
 }
 
@@ -34,7 +36,7 @@ func (r *PostgresRepository) InsertAccount(ctx context.Context, arg models.Accou
 	values ($1, $2, $3, $4)
 	returning id
 `
-	row := r.db.QueryRowContext(ctx, query,
+	row := r.dbpool.QueryRow(ctx, query,
 		arg.Owner,
 		arg.Balance,
 		arg.Currency,
@@ -48,11 +50,6 @@ func (r *PostgresRepository) InsertAccount(ctx context.Context, arg models.Accou
 		return 0, err
 	}
 
-	err = row.Err()
-	if err != nil {
-		return newID, err
-	}
-
 	return newID, nil
 }
 
@@ -64,7 +61,7 @@ func (r *PostgresRepository) GetAccountByID(ctx context.Context, id int64) (mode
 `
 	var a models.Account
 
-	row := r.db.QueryRowContext(ctx, query, id)
+	row := r.dbpool.QueryRow(ctx, query, id)
 	err := row.Scan(
 		&a.ID,
 		&a.Owner,
@@ -72,16 +69,12 @@ func (r *PostgresRepository) GetAccountByID(ctx context.Context, id int64) (mode
 		&a.Currency,
 		&a.CreatedAt,
 	)
+
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == errors.ErrNoRow {
 			log.Printf("account with id: %d not found in database", id)
 			return a, nil
 		}
-		return a, err
-	}
-
-	err = row.Err()
-	if err != nil {
 		return a, err
 	}
 
@@ -95,7 +88,7 @@ func (r *PostgresRepository) GetAccountByOwnerAndCurrency(ctx context.Context, o
 `
 	var a models.Account
 
-	row := r.db.QueryRowContext(ctx, query, owner, currency)
+	row := r.dbpool.QueryRow(ctx, query, owner, currency)
 	err := row.Scan(
 		&a.ID,
 		&a.Owner,
@@ -104,15 +97,10 @@ func (r *PostgresRepository) GetAccountByOwnerAndCurrency(ctx context.Context, o
 		&a.CreatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == errors.ErrNoRow {
 			log.Printf("account with owner %s and currency %s not found in database", owner, currency)
 			return a, nil
 		}
-		return a, err
-	}
-
-	err = row.Err()
-	if err != nil {
 		return a, err
 	}
 
@@ -131,7 +119,7 @@ func (r *PostgresRepository) GetListAccounts(ctx context.Context, owner string, 
 `
 	items := []*models.Account{}
 
-	rows, err := r.db.QueryContext(ctx, query, owner, limit, offset)
+	rows, err := r.dbpool.Query(ctx, query, owner, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +154,7 @@ func (r *PostgresRepository) UpdateAccount(ctx context.Context, arg models.Accou
 	update accounts set balance = $1, currency = $2
 	where id = $3
 `
-	_, err := r.db.ExecContext(ctx, query, arg.Balance, arg.Currency, arg.ID)
+	_, err := r.dbpool.Exec(ctx, query, arg.Balance, arg.Currency, arg.ID)
 	if err != nil {
 		return err
 	}
@@ -179,7 +167,7 @@ func (r *PostgresRepository) DeleteAccount(ctx context.Context, id int64) error 
 	query := `
 	delete from accounts where id = $1
 `
-	_, err := r.db.ExecContext(ctx, query, id)
+	_, err := r.dbpool.Exec(ctx, query, id)
 	if err != nil {
 		return err
 	}
@@ -195,7 +183,7 @@ func (r *PostgresRepository) InsertEntry(ctx context.Context, arg models.Entry) 
 	returning id
 `
 	var newID int64
-	row := r.db.QueryRowContext(ctx, query,
+	row := r.dbpool.QueryRow(ctx, query,
 		arg.AccountID,
 		arg.Amount,
 		time.Now(),
@@ -204,11 +192,6 @@ func (r *PostgresRepository) InsertEntry(ctx context.Context, arg models.Entry) 
 	err := row.Scan(&newID)
 	if err != nil {
 		return 0, err
-	}
-
-	err = row.Err()
-	if err != nil {
-		return newID, err
 	}
 
 	return newID, nil
@@ -222,7 +205,7 @@ func (r *PostgresRepository) GetEntryByID(ctx context.Context, id int64) (models
 `
 	var a models.Entry
 
-	row := r.db.QueryRowContext(ctx, query, id)
+	row := r.dbpool.QueryRow(ctx, query, id)
 	err := row.Scan(
 		&a.ID,
 		&a.AccountID,
@@ -231,15 +214,10 @@ func (r *PostgresRepository) GetEntryByID(ctx context.Context, id int64) (models
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == errors.ErrNoRow {
 			log.Printf("entries with id:%d not found", id)
 			return a, nil
 		}
-		return a, err
-	}
-
-	err = row.Err()
-	if err != nil {
 		return a, err
 	}
 
@@ -257,7 +235,7 @@ func (r *PostgresRepository) GetListEntries(ctx context.Context, accountID int64
 `
 	items := []*models.Entry{}
 
-	rows, err := r.db.QueryContext(ctx, query, accountID, limit, offset)
+	rows, err := r.dbpool.Query(ctx, query, accountID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +272,7 @@ func (r *PostgresRepository) InsertTransfer(ctx context.Context, arg models.Tran
 `
 	var newID int64
 
-	row := r.db.QueryRowContext(ctx, query,
+	row := r.dbpool.QueryRow(ctx, query,
 		arg.FromAccountID,
 		arg.ToAccountID,
 		arg.Amount,
@@ -303,11 +281,6 @@ func (r *PostgresRepository) InsertTransfer(ctx context.Context, arg models.Tran
 	err := row.Scan(&newID)
 	if err != nil {
 		return 0, err
-	}
-
-	err = row.Err()
-	if err != nil {
-		return newID, err
 	}
 
 	return newID, nil
@@ -321,7 +294,7 @@ func (r *PostgresRepository) GetTransferByID(ctx context.Context, id int64) (mod
 `
 	var a models.Transfer
 
-	row := r.db.QueryRowContext(ctx, query, id)
+	row := r.dbpool.QueryRow(ctx, query, id)
 	err := row.Scan(
 		&a.ID,
 		&a.FromAccountID,
@@ -330,15 +303,10 @@ func (r *PostgresRepository) GetTransferByID(ctx context.Context, id int64) (mod
 		&a.CreatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == errors.ErrNoRow {
 			log.Printf("transfers with id:%d not found", id)
 			return a, nil
 		}
-		return a, err
-	}
-
-	err = row.Err()
-	if err != nil {
 		return a, err
 	}
 
@@ -356,7 +324,7 @@ func (r *PostgresRepository) GetListTransfers(ctx context.Context, fromAccountID
 `
 	items := []*models.Transfer{}
 
-	rows, err := r.db.QueryContext(ctx, query, fromAccountID, toAccountID, limit, offset)
+	rows, err := r.dbpool.Query(ctx, query, fromAccountID, toAccountID, limit, offset)
 	if err != nil {
 		return items, err
 	}
@@ -394,7 +362,7 @@ func (r *PostgresRepository) GetAccountByIdForUpdate(ctx context.Context, id int
 `
 	var a models.Account
 
-	row := r.db.QueryRowContext(ctx, query, id)
+	row := r.dbpool.QueryRow(ctx, query, id)
 	err := row.Scan(
 		&a.ID,
 		&a.Owner,
@@ -403,15 +371,10 @@ func (r *PostgresRepository) GetAccountByIdForUpdate(ctx context.Context, id int
 		&a.CreatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == errors.ErrNoRow {
 			log.Printf("account with id: %d not found in database", id)
 			return a, nil
 		}
-		return a, err
-	}
-
-	err = row.Err()
-	if err != nil {
 		return a, err
 	}
 
@@ -428,7 +391,7 @@ func (r *PostgresRepository) AddAccountBalanceByID(ctx context.Context, amount, 
 `
 	var a models.Account
 
-	row := r.db.QueryRowContext(ctx, query, amount, id)
+	row := r.dbpool.QueryRow(ctx, query, amount, id)
 	err := row.Scan(
 		&a.ID,
 		&a.Owner,
@@ -449,7 +412,7 @@ func (r *PostgresRepository) InsertUsers(ctx context.Context, arg models.Users) 
 	values ($1, $2, $3, $4, $5, $6)
 `
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err := r.dbpool.Exec(ctx, query,
 		arg.Username,
 		arg.HashedPassword,
 		arg.FullName,
@@ -470,7 +433,7 @@ func (r *PostgresRepository) GetUsersByUsername(ctx context.Context, username st
 	where username = $1
 `
 	var a models.Users
-	row := r.db.QueryRowContext(ctx, query, username)
+	row := r.dbpool.QueryRow(ctx, query, username)
 	err := row.Scan(
 		&a.Username,
 		&a.HashedPassword,
@@ -481,15 +444,10 @@ func (r *PostgresRepository) GetUsersByUsername(ctx context.Context, username st
 		&a.IsEmailVerify,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == errors.ErrNoRow {
 			log.Printf("users with username %s not found", username)
 			return a, nil
 		}
-		return a, err
-	}
-
-	err = row.Err()
-	if err != nil {
 		return a, err
 	}
 
@@ -502,7 +460,7 @@ func (r *PostgresRepository) GetUsersByEmail(ctx context.Context, email string) 
 	where email = $1
 `
 	var a models.Users
-	row := r.db.QueryRowContext(ctx, query, email)
+	row := r.dbpool.QueryRow(ctx, query, email)
 	err := row.Scan(
 		&a.Username,
 		&a.HashedPassword,
@@ -513,15 +471,10 @@ func (r *PostgresRepository) GetUsersByEmail(ctx context.Context, email string) 
 		&a.IsEmailVerify,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == errors.ErrNoRow {
 			log.Printf("users with email %s not found", email)
 			return a, nil
 		}
-		return a, err
-	}
-
-	err = row.Err()
-	if err != nil {
 		return a, err
 	}
 
@@ -533,7 +486,7 @@ func (r *PostgresRepository) GetListUsers(ctx context.Context, limit, offset int
 	select username, hashed_password, full_name, email, created_at, updated_at, is_email_verify from users limit $1 offset $2
 `
 	var items []*models.Users
-	rows, err := r.db.QueryContext(ctx, query, limit, offset)
+	rows, err := r.dbpool.Query(ctx, query, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -582,7 +535,7 @@ func (r *PostgresRepository) UpdateUsers(ctx context.Context, arg UpdateUserPara
 	    updated_at = $5
 	where username = $6
 `
-	_, err := r.db.ExecContext(ctx, query,
+	_, err := r.dbpool.Exec(ctx, query,
 		arg.HashedPassword,
 		arg.FullName,
 		arg.Email,
@@ -601,7 +554,7 @@ func (r *PostgresRepository) DeleteUsers(ctx context.Context, username string) e
 	query := `
 	delete from users where username = $1
 `
-	_, err := r.db.ExecContext(ctx, query, username)
+	_, err := r.dbpool.Exec(ctx, query, username)
 	if err != nil {
 		return err
 	}
@@ -614,7 +567,7 @@ func (r *PostgresRepository) InsertSessions(ctx context.Context, arg models.Sess
 	insert into sessions (id, username, refresh_token, user_agent, client_ip, is_blocked, expired_at, created_at) 
 	values ($1, $2, $3, $4, $5, $6, $7, $8) 
 `
-	_, err := r.db.ExecContext(ctx, query,
+	_, err := r.dbpool.Exec(ctx, query,
 		arg.ID,
 		arg.Username,
 		arg.RefreshToken,
@@ -638,7 +591,7 @@ func (r *PostgresRepository) GetSessionsByID(ctx context.Context, id uuid.UUID) 
 	where id = $1
 `
 	var s models.Sessions
-	row := r.db.QueryRowContext(ctx, query, id)
+	row := r.dbpool.QueryRow(ctx, query, id)
 	err := row.Scan(
 		&s.ID,
 		&s.Username,
@@ -650,14 +603,9 @@ func (r *PostgresRepository) GetSessionsByID(ctx context.Context, id uuid.UUID) 
 		&s.CreatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == errors.ErrNoRow {
 			return s, nil
 		}
-		return s, err
-	}
-
-	err = row.Err()
-	if err != nil {
 		return s, err
 	}
 
@@ -671,7 +619,7 @@ func (r *PostgresRepository) InsertVerifyEmail(ctx context.Context, arg models.V
 	returning id
 `
 	var id int64
-	row := r.db.QueryRowContext(ctx, query,
+	row := r.dbpool.QueryRow(ctx, query,
 		arg.Username,
 		arg.Email,
 		arg.SecretCode,
@@ -681,11 +629,6 @@ func (r *PostgresRepository) InsertVerifyEmail(ctx context.Context, arg models.V
 	)
 
 	err := row.Scan(&id)
-	if err != nil {
-		return 0, err
-	}
-
-	err = row.Err()
 	if err != nil {
 		return 0, err
 	}
@@ -700,7 +643,7 @@ func (r *PostgresRepository) GetVerifyEmailByID(ctx context.Context, id int64) (
 	where id = $1
 `
 	var a models.VerifyEmail
-	row := r.db.QueryRowContext(ctx, query, id)
+	row := r.dbpool.QueryRow(ctx, query, id)
 	err := row.Scan(
 		&a.ID,
 		&a.Username,
@@ -711,14 +654,9 @@ func (r *PostgresRepository) GetVerifyEmailByID(ctx context.Context, id int64) (
 		&a.ExpiredAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == errors.ErrNoRow {
 			return a, nil
 		}
-		return a, err
-	}
-
-	err = row.Err()
-	if err != nil {
 		return a, err
 	}
 
@@ -734,17 +672,12 @@ func (r *PostgresRepository) UpdateVerifyEmailIsUsed(ctx context.Context, id int
 	  AND is_used = false
 	  AND expired_at > now()
 `
-	res, err := r.db.ExecContext(ctx, query, id, secretCode)
+	res, err := r.dbpool.Exec(ctx, query, id, secretCode)
 	if err != nil {
 		return err
 	}
 
-	effected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if effected == 0 {
+	if res.RowsAffected() == 0 {
 		return fmt.Errorf("nothing row effected")
 	}
 	return nil
