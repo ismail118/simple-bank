@@ -3,8 +3,19 @@ CREATE TABLE "users" (
   "hashed_password" varchar NOT NULL,
   "full_name" varchar NOT NULL,
   "email" varchar UNIQUE NOT NULL,
+  "is_email_verify" boolean NOT NULL DEFAULT 'false',
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now())
+);
+
+CREATE TABLE "verify_email" (
+  "id" bigserial PRIMARY KEY,
+  "username" varchar NOT NULL,
+  "email" varchar NOT NULL,
+  "secret_code" varchar NOT NULL,
+  "is_used" boolean NOT NULL DEFAULT 'false',
+  "created_at" timestamptz NOT NULL DEFAULT 'now()',
+  "expired_at" timestamptz NOT NULL DEFAULT 'now() + interval 15 minutes'
 );
 
 CREATE TABLE "sessions" (
@@ -56,6 +67,8 @@ CREATE INDEX ON "transfers" ("from_account_id", "to_account_id");
 COMMENT ON COLUMN "entries"."amount" IS 'it can be negative or positive';
 
 COMMENT ON COLUMN "transfers"."amount" IS 'it must be positive';
+
+ALTER TABLE "verify_email" ADD FOREIGN KEY ("username") REFERENCES "users" ("username");
 
 ALTER TABLE "sessions" ADD FOREIGN KEY ("username") REFERENCES "users" ("username");
 

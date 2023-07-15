@@ -53,6 +53,15 @@ message LoginResponse {
   User user = 6;
 }
 
+message VerifyEmailRequest {
+  int64 id = 1;
+  string secret_code = 2;
+}
+
+message VerifyEmailResponse {
+  bool is_verify = 1;
+}
+
 service SimpleBank {
   rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
     option (google.api.http) = {
@@ -70,6 +79,11 @@ service SimpleBank {
     option (google.api.http) = {
       post: "/v1/login"
       body: "*"
+    };
+  }
+  rpc VerifyEmail (VerifyEmailRequest) returns (VerifyEmailResponse) {
+    option (google.api.http) = {
+      get: "/v1/verify_email"
     };
   }
 }

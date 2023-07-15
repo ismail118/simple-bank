@@ -30,6 +30,9 @@ type Repository interface {
 	GetUsersByEmail(ctx context.Context, email string) (models.Users, error)
 	InsertSessions(ctx context.Context, arg models.Sessions) error
 	GetSessionsByID(ctx context.Context, id uuid.UUID) (models.Sessions, error)
+	InsertVerifyEmail(ctx context.Context, arg models.VerifyEmail) (int64, error)
+	GetVerifyEmailByID(ctx context.Context, id int64) (models.VerifyEmail, error)
+	UpdateVerifyEmailIsUsed(ctx context.Context, id int64, secretCode string) error
 }
 
 type DBTX interface {

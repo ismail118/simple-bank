@@ -14,8 +14,11 @@ https://github.com/golang-migrate/migrate
 - PASETO token: https://github.com/o1egl/paseto
 - GRPC: https://github.com/grpc/grpc-go
 - Log JSON format: https://github.com/rs/zerolog
+- Queue task and async processing (used Redis as message broker): https://github.com/hibiken/asynq
+- email: https://github.com/jordan-wright/email
 
 ### Development Tools
+- Docker: https://docs.docker.com/get-docker/
 - Github actions for ci Continuous Integration: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
 - Minikube for for localhost kubernates CD: https://kubernetes.io/docs/tutorials/hello-minikube/
   - Download and instalation: https://minikube.sigs.k8s.io/docs/start/
@@ -25,3 +28,12 @@ https://github.com/golang-migrate/migrate
   - proto doc: https://protobuf.dev/programming-guides/proto3/
 - For call gRPC server tools: https://github.com/ktr0731/evans
 - Grpc gateway for auto http to grpc request: https://github.com/grpc-ecosystem/grpc-gateway
+- Docker Redis for queue message broker:
+  ```
+  $ docker pull redis:7.0.12-alpine
+  ```
+  to start redis server locally
+  ```
+  $ make redis
+  ```
+- Next

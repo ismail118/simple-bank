@@ -35,6 +35,7 @@ type Users struct {
 	HashedPassword string    `json:"-"`
 	FullName       string    `json:"full_name"`
 	Email          string    `json:"email"`
+	IsEmailVerify  bool      `json:"is_email_verify"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
@@ -48,4 +49,14 @@ type Sessions struct {
 	IsBlocked    bool      `json:"is_blocked"`
 	ExpiredAt    time.Time `json:"expired_at"`
 	CreatedAt    time.Time `json:"created_at"`
+}
+
+type VerifyEmail struct {
+	ID         int64     `json:"id"`
+	Username   string    `json:"username"`
+	Email      string    `json:"email"`
+	SecretCode string    `json:"secret_code"`
+	IsUsed     bool      `json:"is_used"`
+	CreatedAt  time.Time `json:"created_at"`
+	ExpiredAt  time.Time `json:"expired_at"`
 }
