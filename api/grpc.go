@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
+
 	"github.com/hibiken/asynq"
 	"github.com/ismail118/simple-bank/models"
 	pb "github.com/ismail118/simple-bank/proto"
@@ -15,7 +17,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"time"
 )
 
 // GrpcServer serves gRPC request for our banking service
@@ -54,22 +55,6 @@ func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 		return nil, status.Errorf(codes.InvalidArgument, "%s:%s", violations[0].Field, violations[0].Description)
 	}
 
-	u, err := s.repo.GetUsersByUsername(ctx, req.GetUsername())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s", err)
-	}
-	if u.Username != "" {
-		return nil, status.Errorf(codes.AlreadyExists, "user with username %s is exists", u.Username)
-	}
-
-	u, err = s.repo.GetUsersByEmail(ctx, req.GetEmail())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "%s", err)
-	}
-	if u.Username != "" {
-		return nil, status.Errorf(codes.AlreadyExists, "email %s already being user", req.Email)
-	}
-
 	hashedPassword, err := util.HashedPassword(req.GetPassword())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to hash password err:%s", err)
@@ -102,6 +87,10 @@ func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 		return nil
 	})
 	if err != nil {
+		if repository.ErrorCode(err) == repository.UniqueViolation {
+			return nil, status.Errorf(codes.AlreadyExists, err.Error())
+		}
+		
 		return nil, status.Errorf(codes.Internal, "failed create user tx err:%s", err)
 	}
 
@@ -125,10 +114,10 @@ func (s *GrpcServer) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 
 	user, err := s.repo.GetUsersByUsername(ctx, req.GetUsername())
 	if err != nil {
+		if err == repository.ErrNoRow {
+			return nil, status.Error(codes.NotFound, "username not found")
+		}
 		return nil, status.Errorf(codes.Internal, "err:%s", err)
-	}
-	if user.Username == "" {
-		return nil, status.Error(codes.NotFound, "username not found")
 	}
 
 	// authorization
@@ -137,11 +126,12 @@ func (s *GrpcServer) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 	}
 
 	if user.Email != req.GetEmail() {
-		u, err := s.repo.GetUsersByEmail(ctx, req.GetEmail())
+		_, err := s.repo.GetUsersByEmail(ctx, req.GetEmail())
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "err:%s", err)
-		}
-		if u.Username != "" {
+			if err != repository.ErrNoRow {
+				return nil, status.Errorf(codes.Internal, "err:%s", err)
+			}
+		} else {
 			return nil, status.Errorf(codes.InvalidArgument, "email %s already being used", req.GetEmail())
 		}
 	}
@@ -156,6 +146,10 @@ func (s *GrpcServer) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 		Email:    sql.NullString{String: user.Email, Valid: true},
 	})
 	if err != nil {
+		errorCode := repository.ErrorCode(err)
+		if errorCode == repository.UniqueViolation {
+			return nil, status.Errorf(codes.InvalidArgument, "email %s already being used", req.GetEmail())
+		}
 		return nil, status.Errorf(codes.Internal, "err:%s", err)
 	}
 
@@ -173,11 +167,11 @@ func (s *GrpcServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 
 	user, err := s.repo.GetUsersByUsername(ctx, req.Username)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			err = errors.New("username not found")
+			return nil, status.Errorf(codes.NotFound, "%s", err)
+		}
 		return nil, status.Errorf(codes.Internal, "%s", err)
-	}
-	if user.Username == "" {
-		err = errors.New("username not found")
-		return nil, status.Errorf(codes.NotFound, "%s", err)
 	}
 
 	err = util.ComparePassword(user.HashedPassword, req.Password)

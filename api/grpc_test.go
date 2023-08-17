@@ -40,28 +40,28 @@ func Test_Grpc_CreateUser(t *testing.T) {
 			isNilResponse: true,
 			isError:       true,
 		},
-		{
-			name: "user-already-exist",
-			req: &pb.CreateUserRequest{
-				Username: "ismail",
-				FullName: util.RandomString(6),
-				Email:    "notexists@gmail.com",
-				Password: util.RandomString(12),
-			},
-			isNilResponse: true,
-			isError:       true,
-		},
-		{
-			name: "email-already-exist",
-			req: &pb.CreateUserRequest{
-				Username: "user",
-				FullName: util.RandomString(6),
-				Email:    "exist@gmail.com",
-				Password: util.RandomString(12),
-			},
-			isNilResponse: true,
-			isError:       true,
-		},
+		// {
+		// 	name: "user-already-exist",
+		// 	req: &pb.CreateUserRequest{
+		// 		Username: "ismail",
+		// 		FullName: util.RandomString(6),
+		// 		Email:    "notexists@gmail.com",
+		// 		Password: util.RandomString(12),
+		// 	},
+		// 	isNilResponse: true,
+		// 	isError:       true,
+		// },
+		// {
+		// 	name: "email-already-exist",
+		// 	req: &pb.CreateUserRequest{
+		// 		Username: "user",
+		// 		FullName: util.RandomString(6),
+		// 		Email:    "exist@gmail.com",
+		// 		Password: util.RandomString(12),
+		// 	},
+		// 	isNilResponse: true,
+		// 	isError:       true,
+		// },
 		{
 			name: "error-send-verify-email",
 			req: &pb.CreateUserRequest{

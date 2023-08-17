@@ -35,29 +35,13 @@ func (s *Server) createAccount(ctx *gin.Context) {
 		Currency: req.Currency,
 	}
 
-	user, err := s.repo.GetUsersByUsername(ctx, acc.Owner)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if user.Username == "" {
-		ctx.JSON(http.StatusForbidden, fmt.Sprintf("user with username %s not exists", acc.Owner))
-		return
-	}
-
-	a, err := s.repo.GetAccountByOwnerAndCurrency(ctx, acc.Owner, acc.Currency)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	if a.ID > 1 {
-		ctx.JSON(http.StatusForbidden, fmt.Sprintf("account with owner %s and %s alredy exists", acc.Owner, acc.Currency))
-		return
-	}
-
 	newID, err := s.repo.InsertAccount(ctx, acc)
 	if err != nil {
+		errCode := repository.ErrorCode(err)
+		if errCode == repository.ForeignKeyViolation || errCode == repository.UniqueViolation {
+			ctx.JSON(http.StatusForbidden, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -81,11 +65,11 @@ func (s *Server) getAccount(ctx *gin.Context) {
 
 	acc, err := s.repo.GetAccountByID(ctx, req.ID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if acc.ID < 1 {
-		ctx.JSON(http.StatusNotFound, "account not found")
 		return
 	}
 
@@ -146,11 +130,11 @@ func (s *Server) updateAccount(ctx *gin.Context) {
 
 	account, err := s.repo.GetAccountByID(ctx, req.ID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if account.ID < 1 {
-		ctx.JSON(http.StatusNotFound, "account not found")
 		return
 	}
 
@@ -185,11 +169,11 @@ func (s *Server) deleteAccount(ctx *gin.Context) {
 
 	account, err := s.repo.GetAccountByID(ctx, req.ID)
 	if err != nil {
+		if err != repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if account.ID < 1 {
-		ctx.JSON(http.StatusNotFound, "account not found")
 		return
 	}
 
@@ -221,17 +205,20 @@ func (s *Server) getEntry(ctx *gin.Context) {
 
 	entry, err := s.repo.GetEntryByID(ctx, req.ID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	if entry.ID < 1 {
-		ctx.JSON(http.StatusNotFound, "entry not found")
 		return
 	}
 
 	account, err := s.repo.GetAccountByID(ctx, entry.AccountID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -264,6 +251,10 @@ func (s *Server) listEntries(ctx *gin.Context) {
 
 	account, err := s.repo.GetAccountByID(ctx, req.AccountID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -300,23 +291,30 @@ func (s *Server) getTransfer(ctx *gin.Context) {
 
 	transfer, err := s.repo.GetTransferByID(ctx, req.ID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	if transfer.ID < 1 {
-		ctx.JSON(http.StatusNotFound, "transfer not found")
 		return
 	}
 
 	fAccount, err := s.repo.GetAccountByID(ctx, transfer.FromAccountID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
 	tAccount, err := s.repo.GetAccountByID(ctx, transfer.ToAccountID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -350,12 +348,20 @@ func (s *Server) listTransfer(ctx *gin.Context) {
 
 	fAccount, err := s.repo.GetAccountByID(ctx, req.FromAccountID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
 	tAccount, err := s.repo.GetAccountByID(ctx, req.ToAccountID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -399,11 +405,11 @@ func (s *Server) transfer(ctx *gin.Context) {
 
 	fAccount, err := s.repo.GetAccountByID(ctx, req.FromAccountID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if fAccount.ID < 1 {
-		ctx.JSON(http.StatusNotFound, "from account not found")
 		return
 	}
 	if fAccount.Currency != req.Currency {
@@ -413,11 +419,11 @@ func (s *Server) transfer(ctx *gin.Context) {
 
 	tAccount, err := s.repo.GetAccountByID(ctx, req.ToAccountID)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if tAccount.ID < 1 {
-		ctx.JSON(http.StatusNotFound, "to account not found")
 		return
 	}
 	if fAccount.Currency != req.Currency {
@@ -476,32 +482,41 @@ func (s *Server) createUser(ctx *gin.Context) {
 
 	u, err := s.repo.GetUsersByUsername(ctx, user.Username)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if u.Username != "" {
-		ctx.JSON(http.StatusForbidden, fmt.Sprintf("user with username %s is exists", u.Username))
 		return
 	}
 
 	u, err = s.repo.GetUsersByEmail(ctx, req.Email)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if u.Username != "" {
-		ctx.JSON(http.StatusNotFound, fmt.Sprintf("email %s already being userd", req.Email))
 		return
 	}
 
 	err = s.repo.InsertUsers(ctx, user)
 	if err != nil {
+		errCode := repository.ErrorCode(err)
+		if errCode == repository.ForeignKeyViolation || errCode == repository.UniqueViolation {
+			ctx.JSON(http.StatusForbidden, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
 	u, err = s.repo.GetUsersByUsername(ctx, user.Username)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -524,11 +539,11 @@ func (s *Server) getUsers(ctx *gin.Context) {
 
 	user, err := s.repo.GetUsersByUsername(ctx, req.Username)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if user.Username == "" {
-		ctx.JSON(http.StatusNotFound, "users not found")
 		return
 	}
 
@@ -581,21 +596,22 @@ func (s *Server) updateUsers(ctx *gin.Context) {
 
 	user, err := s.repo.GetUsersByUsername(ctx, req.Username)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if user.Username == "" {
-		ctx.JSON(http.StatusNotFound, "users not found")
 		return
 	}
 
 	if user.Email != req.Email {
-		u, err := s.repo.GetUsersByEmail(ctx, req.Email)
+		_, err := s.repo.GetUsersByEmail(ctx, req.Email)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-			return
-		}
-		if u.Username != "" {
+			if err != repository.ErrNoRow {
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+				return
+			}
+		} else {
 			ctx.JSON(http.StatusForbidden, fmt.Sprintf("email %s already being userd", req.Email))
 			return
 		}
@@ -618,6 +634,11 @@ func (s *Server) updateUsers(ctx *gin.Context) {
 		Email:    sql.NullString{String: user.Email, Valid: true},
 	})
 	if err != nil {
+		errCode := repository.ErrorCode(err)
+		if errCode == repository.UniqueViolation {
+			ctx.JSON(http.StatusForbidden, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -636,11 +657,11 @@ func (s *Server) deleteUsers(ctx *gin.Context) {
 
 	user, err := s.repo.GetUsersByUsername(ctx, req.Username)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if user.Username == "" {
-		ctx.JSON(http.StatusNotFound, "user not found")
 		return
 	}
 
@@ -685,11 +706,11 @@ func (s *Server) loginUser(ctx *gin.Context) {
 
 	user, err := s.repo.GetUsersByUsername(ctx, req.Username)
 	if err != nil {
+		if err == repository.ErrNoRow {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if user.Username == "" {
-		ctx.JSON(http.StatusNotFound, "username not found")
 		return
 	}
 
@@ -723,6 +744,11 @@ func (s *Server) loginUser(ctx *gin.Context) {
 
 	err = s.repo.InsertSessions(ctx, session)
 	if err != nil {
+		errCode := repository.ErrorCode(err)
+		if errCode == repository.ForeignKeyViolation || errCode == repository.UniqueViolation {
+			ctx.JSON(http.StatusForbidden, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
