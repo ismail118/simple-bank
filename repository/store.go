@@ -40,6 +40,7 @@ func (s *SQLStore) execTx(ctx context.Context, fn func(Repository) error) error 
 		if rbErr != nil {
 			return fmt.Errorf("tx error:%s rollback error: %s", err, rbErr)
 		}
+		return err
 	}
 
 	return tx.Commit(ctx)

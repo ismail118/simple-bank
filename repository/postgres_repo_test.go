@@ -3,10 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"github.com/ismail118/simple-bank/models"
-	"github.com/ismail118/simple-bank/util"
 	"testing"
 	"time"
+
+	"github.com/ismail118/simple-bank/models"
+	"github.com/ismail118/simple-bank/util"
 )
 
 func createRandomAccount(owner string) models.Account {
@@ -248,7 +249,9 @@ func TestDeleteAccount(t *testing.T) {
 	// get back the data
 	data, err := testRepo.GetAccountByID(context.Background(), newID)
 	if err != nil {
-		t.Errorf("failed get account error:%s", err)
+		if err != ErrNoRow {
+			t.Errorf("failed get account error:%s", err)
+		}
 	}
 
 	if data.ID > 0 {
@@ -896,7 +899,9 @@ func TestDeleteUsers(t *testing.T) {
 	// get back the data
 	data, err := testRepo.GetUsersByUsername(context.Background(), dataTest.Username)
 	if err != nil {
-		t.Errorf("failed get users error:%s", err)
+		if err != ErrNoRow {
+			t.Errorf("failed get users error:%s", err)
+		}
 	}
 
 	if data.Username != "" {

@@ -4,12 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
-	"github.com/ismail118/simple-bank/errors"
 	"github.com/ismail118/simple-bank/models"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
-	"time"
 )
 
 type PostgresRepository struct {
@@ -71,10 +70,6 @@ func (r *PostgresRepository) GetAccountByID(ctx context.Context, id int64) (mode
 	)
 
 	if err != nil {
-		if err == errors.ErrNoRow {
-			log.Printf("account with id: %d not found in database", id)
-			return a, nil
-		}
 		return a, err
 	}
 
@@ -97,10 +92,6 @@ func (r *PostgresRepository) GetAccountByOwnerAndCurrency(ctx context.Context, o
 		&a.CreatedAt,
 	)
 	if err != nil {
-		if err == errors.ErrNoRow {
-			log.Printf("account with owner %s and currency %s not found in database", owner, currency)
-			return a, nil
-		}
 		return a, err
 	}
 
@@ -214,10 +205,6 @@ func (r *PostgresRepository) GetEntryByID(ctx context.Context, id int64) (models
 	)
 
 	if err != nil {
-		if err == errors.ErrNoRow {
-			log.Printf("entries with id:%d not found", id)
-			return a, nil
-		}
 		return a, err
 	}
 
@@ -303,10 +290,6 @@ func (r *PostgresRepository) GetTransferByID(ctx context.Context, id int64) (mod
 		&a.CreatedAt,
 	)
 	if err != nil {
-		if err == errors.ErrNoRow {
-			log.Printf("transfers with id:%d not found", id)
-			return a, nil
-		}
 		return a, err
 	}
 
@@ -371,10 +354,6 @@ func (r *PostgresRepository) GetAccountByIdForUpdate(ctx context.Context, id int
 		&a.CreatedAt,
 	)
 	if err != nil {
-		if err == errors.ErrNoRow {
-			log.Printf("account with id: %d not found in database", id)
-			return a, nil
-		}
 		return a, err
 	}
 
@@ -444,10 +423,6 @@ func (r *PostgresRepository) GetUsersByUsername(ctx context.Context, username st
 		&a.IsEmailVerify,
 	)
 	if err != nil {
-		if err == errors.ErrNoRow {
-			log.Printf("users with username %s not found", username)
-			return a, nil
-		}
 		return a, err
 	}
 
@@ -471,10 +446,6 @@ func (r *PostgresRepository) GetUsersByEmail(ctx context.Context, email string) 
 		&a.IsEmailVerify,
 	)
 	if err != nil {
-		if err == errors.ErrNoRow {
-			log.Printf("users with email %s not found", email)
-			return a, nil
-		}
 		return a, err
 	}
 
@@ -603,9 +574,6 @@ func (r *PostgresRepository) GetSessionsByID(ctx context.Context, id uuid.UUID) 
 		&s.CreatedAt,
 	)
 	if err != nil {
-		if err == errors.ErrNoRow {
-			return s, nil
-		}
 		return s, err
 	}
 
@@ -654,9 +622,6 @@ func (r *PostgresRepository) GetVerifyEmailByID(ctx context.Context, id int64) (
 		&a.ExpiredAt,
 	)
 	if err != nil {
-		if err == errors.ErrNoRow {
-			return a, nil
-		}
 		return a, err
 	}
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/ismail118/simple-bank/util"
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"os"
 	"testing"
