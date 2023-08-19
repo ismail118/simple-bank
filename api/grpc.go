@@ -90,7 +90,7 @@ func (s *GrpcServer) CreateUser(ctx context.Context, req *pb.CreateUserRequest) 
 		if repository.ErrorCode(err) == repository.UniqueViolation {
 			return nil, status.Errorf(codes.AlreadyExists, err.Error())
 		}
-		
+
 		return nil, status.Errorf(codes.Internal, "failed create user tx err:%s", err)
 	}
 

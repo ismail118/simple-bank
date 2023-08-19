@@ -84,3 +84,12 @@ redis:
 
 coverage:
 	go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out
+
+generate_mock2:
+	mockgen -source=foo.go
+
+repo_mock:
+	mockgen -package repository -destination repository/repository_mock.go github.com/ismail118/simple-bank/repository Store,Repository
+
+worker_mock:
+	mockgen -package worker -destination worker/worker_mock.go github.com/ismail118/simple-bank/worker TaskDistributor,TaskProcessor

@@ -17,6 +17,7 @@ https://github.com/golang-migrate/migrate
 - Log JSON format: https://github.com/rs/zerolog
 - Queue task and async processing (used Redis as message broker): https://github.com/hibiken/asynq
 - email: https://github.com/jordan-wright/email
+- Assertion testing: https://github.com/stretchr/testify
 
 ### Development Tools
 - Docker: https://docs.docker.com/get-docker/
@@ -37,4 +38,9 @@ https://github.com/golang-migrate/migrate
   ```
   $ make redis
   ```
-- Next
+- Gomock for mocking: https://github.com/golang/mock
+  - instalation:
+  ```
+  $ go install github.com/golang/mock/mockgen@v1.6.0
+  $ go get github.com/golang/mock/mockgen@v1.6.0
+  ```

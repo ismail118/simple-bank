@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/ismail118/simple-bank/models"
 )
 
 const alphabet = "abcdefghijklmnovqrstuvwxyz"
@@ -45,4 +47,26 @@ func RandomCurrency() string {
 
 func RandomEmail() string {
 	return fmt.Sprintf("%s@gmai.com", RandomString(6))
+}
+
+func RandomUser() (user models.Users, password string, err error) {
+	password = RandomString(6)
+	hashedPassword, err := HashedPassword(password)
+
+	user = models.Users{
+		Username:       RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       RandomOwner(),
+		Email:          RandomEmail(),
+	}
+	return
+}
+
+func RandomAccount(owner string) models.Account {
+	return models.Account{
+		ID:       RandomInt(1, 1000),
+		Owner:    owner,
+		Balance:  RandomBalance(),
+		Currency: RandomCurrency(),
+	}
 }

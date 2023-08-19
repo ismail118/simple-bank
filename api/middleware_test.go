@@ -169,7 +169,7 @@ func Test_authorizationMiddleware(t *testing.T) {
 	}
 
 	router := gin.New()
-	tokenMaker := serverTest.tokenMaker
+	tokenMaker := tokenMakerTest
 
 	router.Use(authMiddleware(tokenMaker))
 	router.GET("/", func(ctx *gin.Context) {
