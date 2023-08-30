@@ -10,6 +10,9 @@ create_db:
 	echo "create database"
 	docker exec -it postgres-db-1 createdb --username=postgres --owner=postgres simple_bank
 
+login_db:
+	docker exec -it postgres-db-1 psql --username postgres --password postgres -d simple_bank
+	
 drop_db:
 	echo "drop database"
 	docker exec -it postgres-db-1 dropdb --username=postgres simple_bank
