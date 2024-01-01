@@ -2,6 +2,9 @@ install_golang_migration:
 	echo "install golang migration"
 	brew install golang-migrate
 
+postgres:
+	docker run --name postgres-db-1 -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -d postgres:14.7-alpine
+
 create_migration:
 	echo "create migration file"
 	migrate create -ext sql -dir db/migration -seq init_schema

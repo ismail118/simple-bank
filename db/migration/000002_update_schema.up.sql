@@ -7,8 +7,6 @@ CREATE TABLE "users" (
      "updated_at" timestamptz NOT NULL DEFAULT (now())
 );
 
-CREATE INDEX ON "accounts" ("owner", "currency");
-
 ALTER TABLE "accounts" ADD FOREIGN KEY ("owner") REFERENCES "users" ("username") ON DELETE CASCADE;
 
 -- CREATE UNIQUE INDEX ON "accounts" ("owner", "currency");

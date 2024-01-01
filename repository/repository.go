@@ -41,3 +41,10 @@ type DBTX interface {
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }
+
+type Manager struct {
+    FullName       string
+    Position       string
+    Age            int32
+    YearsInCompany int32
+}
